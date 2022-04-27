@@ -35,45 +35,27 @@ module.exports = {
     },
     mainnet: {
       url: process.env.MAINNET_RPC,
-      accounts:
-        process.env.DEVNET_PRIVKEY !== undefined
-          ? [process.env.DEVNET_PRIVKEY]
-          : [],
+      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
     },
     rinkeby: {
       url: process.env.RINKEBY_RPC,
-      accounts:
-        process.env.DEVNET_PRIVKEY !== undefined
-          ? [process.env.DEVNET_PRIVKEY]
-          : [],
+      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
     },
     arbitrumOne: {
       url: process.env.ARBITRUM_ONE_RPC,
-      accounts:
-        process.env.DEVNET_PRIVKEY !== undefined
-          ? [process.env.DEVNET_PRIVKEY]
-          : [],
+      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
     },
     arbitrumTestnet: {
       url: process.env.ARBITRUM_TESTNET_RPC,
-      accounts:
-        process.env.DEVNET_PRIVKEY !== undefined
-          ? [process.env.DEVNET_PRIVKEY]
-          : [],
+      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
     },
     bscMainnet: {
       url: process.env.BSC_MAINNET_PRC,
-      accounts:
-        process.env.DEVNET_PRIVKEY !== undefined
-          ? [process.env.DEVNET_PRIVKEY]
-          : [],
+      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
     },
     bscTestnet: {
       url: process.env.BSC_TESTNET_PRC,
-      accounts:
-        process.env.DEVNET_PRIVKEY !== undefined
-          ? [process.env.DEVNET_PRIVKEY]
-          : [],
+      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
     },
   },
   etherscan: {
