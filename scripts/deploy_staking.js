@@ -32,9 +32,17 @@ let stakingPoolFactory;
 let rewardForStaking;
 
 const main = async () => {
-  await createPools();
+  await createEsApeX();
+  // await createPools();
   // await createReward();
 };
+
+async function createEsApeX() {
+  const EsAPEX = await ethers.getContractFactory("EsAPEX");
+  esApeX = await EsAPEX.deploy();
+  console.log("EsAPEX:", esApeX.address);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, esApeX.address);
+}
 
 async function createPools() {
   const StakingPoolFactory = await ethers.getContractFactory("StakingPoolFactory");
@@ -75,9 +83,9 @@ async function createPools() {
   console.log("ApeXPool:", apeXPool.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, apeXPool.address, stakingPoolFactory.address, apeXAddress);
 
-  esApeX = await EsAPEX.deploy(stakingPoolFactory.address);
+  esApeX = await EsAPEX.deploy();
   console.log("EsAPEX:", esApeX.address);
-  console.log(verifyStr, process.env.HARDHAT_NETWORK, esApeX.address, stakingPoolFactory.address);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, esApeX.address);
 
   veApeX = await VeAPEX.deploy(stakingPoolFactory.address);
   console.log("VeAPEX:", veApeX.address);

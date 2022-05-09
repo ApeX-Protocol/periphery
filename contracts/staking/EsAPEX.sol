@@ -13,9 +13,9 @@ contract EsAPEX is IERC20, Whitelist {
     mapping(address => uint256) public override balanceOf;
     mapping(address => mapping(address => uint256)) public override allowance;
 
-    constructor(address _stakingPoolFactory) {
+    constructor() {
         owner = msg.sender;
-        _addOperator(_stakingPoolFactory);
+        _addOperator(owner);
     }
 
     function mint(address to, uint256 value) external onlyOperator returns (bool) {
