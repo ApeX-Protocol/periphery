@@ -1,6 +1,11 @@
-const { expect } = require("chai");
-const { ethers, upgrades, network } = require("hardhat");
+const { expect, use } = require("chai");
+const { ethers, upgrades, network, waffle } = require("hardhat");
+const { utils } = require("ethers");
+const { solidity } = require("ethereum-waffle");
+const { expandDecimals } = require("../shared/utilities");
 const hre = require("hardhat");
+
+use(solidity);
 
 describe("stakingPool contract", function () {
   let apeXToken;
@@ -26,10 +31,10 @@ describe("stakingPool contract", function () {
   let addr2;
 
   beforeEach(async function () {
-    [owner, addr1, addr2] = await ethers.getSigners();
+    const provider = waffle.provider;
+    let [owner, addr1, addr2] = provider.getWallets();
 
     const MockToken = await ethers.getContractFactory("MockToken");
-    const StakingPoolFactory = await ethers.getContractFactory("StakingPoolFactory");
     const ApeXPool = await ethers.getContractFactory("ApeXPool");
     const MockEsApeX = await ethers.getContractFactory("MockEsApeX");
     const VeAPEX = await ethers.getContractFactory("VeAPEX");
@@ -38,7 +43,7 @@ describe("stakingPool contract", function () {
     stakingPoolTemplate = await StakingPoolTemplate.deploy();
     apeXToken = await MockToken.deploy("apeX token", "at");
     slpToken = await MockToken.deploy("slp token", "slp");
-    stakingPoolFactory = await upgrades.deployProxy(StakingPoolFactory, [
+    stakingPoolFactory = await upgrades.deployProxy(await ethers.getContractFactory("StakingPoolFactory"), [
       apeXToken.address,
       addr1.address,
       apeXPerSec,
