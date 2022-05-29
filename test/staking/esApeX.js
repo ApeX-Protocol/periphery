@@ -5,7 +5,7 @@ const { deployContract } = require("../shared/utilities");
 
 use(solidity);
 
-describe("esApeX contract", function () {
+describe("esApeX UT", function () {
   let esApeXToken, owner, addr1, addr2;
 
   beforeEach(async function () {

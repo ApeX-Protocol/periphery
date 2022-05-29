@@ -3,7 +3,7 @@ const { ethers, upgrades, network } = require("hardhat");
 const hre = require("hardhat");
 const { deployContract } = require("../shared/utilities");
 
-describe("stakingPool contract", function() {
+describe("stakingPool UT", function() {
   let apeXToken, slpToken, esApeXToken, veApeXToken, stakingPoolFactory, apeXPool, slpStakingPool, stakingPoolTemplate;
 
   let initTimestamp = 1641781192;

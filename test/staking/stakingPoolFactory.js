@@ -3,7 +3,7 @@ const { constants } = require("@openzeppelin/test-helpers");
 const { ethers, upgrades, network } = require("hardhat");
 const { deployContract } = require("../shared/utilities");
 
-describe("stakingPoolFactory contract", function() {
+describe("stakingPoolFactory UT", function() {
   let apexToken, slpToken, esApeXToken, veApeXToken, stakingPoolTemplate, apexPool, fakeApexPool, stakingPoolFactory
     , fakeApexPoolWithSlpToken;
 

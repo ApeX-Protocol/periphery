@@ -6,7 +6,7 @@ const hre = require("hardhat");
 
 use(solidity);
 
-describe("apexPool contract", function() {
+describe("apexPool UT", function() {
   let apeXToken, slpToken, esApeXToken, veApeXToken, stakingPoolFactory, apeXPool, slpStakingPool, stakingPoolTemplate;
 
   let initTimestamp = 1641781192;
