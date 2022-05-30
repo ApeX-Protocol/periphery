@@ -13,7 +13,7 @@ const apeXAddress = "0x3f355c9803285248084879521AE81FF4D3185cDD";
 const treasuryAddress = "0x2225F0bEef512e0302D6C4EcE4f71c85C2312c06"; // PCVTreasury address
 const lpTokenAddress = "0xA0b52dBdB5E4B62c8f3555C047440C555773767a"; // mWETH-mUSDC lp
 
-const apeXPerSec = BigNumber.from("82028346620490110");
+const apeXPerSec = BigNumber.from("830000000000000000");
 const secSpanPerUpdate = 14 * 24 * 3600; //two weeks
 const initTimestamp = Math.round(new Date().getTime() / 1000);
 const endTimestamp = initTimestamp + 365 * 24 * 3600 * 3; //3 years after init time
@@ -33,7 +33,7 @@ let rewardForStaking;
 
 const main = async () => {
   await createEsApeX();
-  // await createPools();
+  await createPools();
   // await createReward();
 };
 

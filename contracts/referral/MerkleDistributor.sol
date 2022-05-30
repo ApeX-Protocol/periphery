@@ -63,7 +63,7 @@ contract MerkleDistributor is IMerkleDistributor {
     }
 
     /// @notice  owner withdraw the rest token
-    function claimRestTokens(address to ) public returns (bool) {
+    function claimRestTokens(address to) public returns (bool) {
         // only owner
         require(msg.sender == owner);
         require(IERC20(token).balanceOf(address(this)) >= 0);
