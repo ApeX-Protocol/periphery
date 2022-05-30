@@ -23,17 +23,11 @@ contract PoolCreateEvent {
 
     event PoolCreated(address indexed factory,
         address indexed pool,
-        uint256 indexed apeXPerSec,
-        uint256 secSpanPerUpdate,
-        uint256 initTimestamp,
-        uint256 lockTime);
+        bool isApexPool);
 
     function PoolCreate(address factory,
         address pool,
-        uint256 apeXPerSec,
-        uint256 secSpanPerUpdate,
-        uint256 initTimestamp,
-        uint256 lockTime) external {
-        emit PoolCreated(factory, pool, apeXPerSec, secSpanPerUpdate, initTimestamp, lockTime);
+        bool isApexPool) external {
+        emit PoolCreated(factory, pool, isApexPool);
     }
 }

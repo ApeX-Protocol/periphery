@@ -13,7 +13,7 @@ const apeXAddress = "0x3f355c9803285248084879521AE81FF4D3185cDD";
 const treasuryAddress = "0x2225F0bEef512e0302D6C4EcE4f71c85C2312c06"; // PCVTreasury address
 const lpTokenAddress = "0xA0b52dBdB5E4B62c8f3555C047440C555773767a"; // mWETH-mUSDC lp
 
-const poolContractEventAddress = "";
+const poolContractEventAddress = "0xDA973715a6cebF43497ef3A382EAd790A440c0fC";
 
 const apeXPerSec = BigNumber.from("82028346620490110");
 const secSpanPerUpdate = 14 * 24 * 3600; //two weeks
@@ -52,7 +52,7 @@ async function createStakingPool() {
   // Log pool creation events
   const PoolCreateEvent = await ethers.getContractFactory("PoolCreateEvent");
   const poolCreateEvent = PoolCreateEvent.attach(poolContractEventAddress);
-  await poolCreateEvent.PoolCreate(stakingPoolFactory.address, apeXPool.address, apeXPerSec, secSpanPerUpdate, initTimestamp, lockTime);
+  await poolCreateEvent.PoolCreate(stakingPoolFactory.address, lpPool.address, false);
 }
 
 async function createApexPool() {
@@ -66,7 +66,7 @@ async function createApexPool() {
   // Log pool creation events
   const PoolCreateEvent = await ethers.getContractFactory("PoolCreateEvent");
   const poolCreateEvent = PoolCreateEvent.attach(poolContractEventAddress);
-  await poolCreateEvent.PoolCreate(stakingPoolFactory.address, apeXPool.address, apeXPerSec, secSpanPerUpdate, initTimestamp, lockTime);
+  await poolCreateEvent.PoolCreate(stakingPoolFactory.address, apeXPool.address, true);
 }
 
 async function createPoolCreatedEvent() {
