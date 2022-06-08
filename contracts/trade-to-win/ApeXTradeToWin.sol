@@ -25,7 +25,7 @@ contract ApeXTradeToWin is Ownable, ReentrancyGuard {
     }
 
     /// @notice Users need approve this smart contract at least 800 APEX before calling
-    function stake() external {
+    function stake() external nonReentrant {
         require(counter < 100, "stake: sorry, already full");
         require(!joined[msg.sender], "stake: already joined");
 
