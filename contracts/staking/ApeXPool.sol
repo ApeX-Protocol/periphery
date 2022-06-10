@@ -18,8 +18,8 @@ contract ApeXPool is IApeXPool, Reentrant {
     mapping(address => User) public users;
 
     constructor(address _factory, address _poolToken) {
-        require(_factory != address(0), "cp: INVALID_FACTORY");
-        require(_poolToken != address(0), "cp: INVALID_POOL_TOKEN");
+        require(_factory != address(0), "ap: INVALID_FACTORY");
+        require(_poolToken != address(0), "ap: INVALID_POOL_TOKEN");
 
         factory = IStakingPoolFactory(_factory);
         poolToken = _poolToken;
@@ -40,12 +40,12 @@ contract ApeXPool is IApeXPool, Reentrant {
         uint256 _lockDuration,
         bool _isEsApeX
     ) internal {
-        require(_amount > 0, "sp.stake: INVALID_AMOUNT");
+        require(_amount > 0, "ap.stake: INVALID_AMOUNT");
         uint256 now256 = block.timestamp;
         uint256 lockTime = factory.lockTime();
         require(
             _lockDuration == 0 || (_lockDuration > 0 && _lockDuration <= lockTime),
-            "sp._stake: INVALID_LOCK_INTERVAL"
+            "ap._stake: INVALID_LOCK_INTERVAL"
         );
 
         address _staker = msg.sender;
@@ -86,9 +86,9 @@ contract ApeXPool is IApeXPool, Reentrant {
         uint256[] memory esDepositIds,
         uint256[] memory esDepositAmounts
     ) external override {
-        require(depositIds.length == depositAmounts.length, "sp.batchWithdraw: INVALID_DEPOSITS_AMOUNTS");
-        require(yieldIds.length == yieldAmounts.length, "sp.batchWithdraw: INVALID_YIELDS_AMOUNTS");
-        require(esDepositIds.length == esDepositAmounts.length, "sp.batchWithdraw: INVALID_ESDEPOSITS_AMOUNTS");
+        require(depositIds.length == depositAmounts.length, "ap.batchWithdraw: INVALID_DEPOSITS_AMOUNTS");
+        require(yieldIds.length == yieldAmounts.length, "ap.batchWithdraw: INVALID_YIELDS_AMOUNTS");
+        require(esDepositIds.length == esDepositAmounts.length, "ap.batchWithdraw: INVALID_ESDEPOSITS_AMOUNTS");
 
         User storage user = users[msg.sender];
         _processRewards(msg.sender, user);
@@ -112,13 +112,13 @@ contract ApeXPool is IApeXPool, Reentrant {
         for (uint256 i = 0; i < depositIds.length; i++) {
             _amount = depositAmounts[i];
             _id = depositIds[i];
-            require(_amount != 0, "sp.batchWithdraw: INVALID_DEPOSIT_AMOUNT");
+            require(_amount != 0, "ap.batchWithdraw: INVALID_DEPOSIT_AMOUNT");
             stakeDeposit = user.deposits[_id];
             require(
                 stakeDeposit.lockFrom == 0 || block.timestamp > stakeDeposit.lockFrom + stakeDeposit.lockDuration,
-                "sp.batchWithdraw: DEPOSIT_LOCKED"
+                "ap.batchWithdraw: DEPOSIT_LOCKED"
             );
-            require(stakeDeposit.amount >= _amount, "sp.batchWithdraw: EXCEED_DEPOSIT_STAKED");
+            require(stakeDeposit.amount >= _amount, "ap.batchWithdraw: EXCEED_DEPOSIT_STAKED");
 
             newWeight =
                 ((stakeDeposit.lockDuration * WEIGHT_MULTIPLIER) /
@@ -142,13 +142,13 @@ contract ApeXPool is IApeXPool, Reentrant {
             for (uint256 i = 0; i < esDepositIds.length; i++) {
                 _amount = esDepositAmounts[i];
                 _id = esDepositIds[i];
-                require(_amount != 0, "sp.batchWithdraw: INVALID_ESDEPOSIT_AMOUNT");
+                require(_amount != 0, "ap.batchWithdraw: INVALID_ESDEPOSIT_AMOUNT");
                 stakeDeposit = user.esDeposits[_id];
                 require(
                     stakeDeposit.lockFrom == 0 || block.timestamp > stakeDeposit.lockFrom + stakeDeposit.lockDuration,
-                    "sp.batchWithdraw: ESDEPOSIT_LOCKED"
+                    "ap.batchWithdraw: ESDEPOSIT_LOCKED"
                 );
-                require(stakeDeposit.amount >= _amount, "sp.batchWithdraw: EXCEED_ESDEPOSIT_STAKED");
+                require(stakeDeposit.amount >= _amount, "ap.batchWithdraw: EXCEED_ESDEPOSIT_STAKED");
 
                 newWeight =
                     ((stakeDeposit.lockDuration * WEIGHT_MULTIPLIER) /
@@ -184,10 +184,10 @@ contract ApeXPool is IApeXPool, Reentrant {
             for (uint256 i = 0; i < yieldIds.length; i++) {
                 _amount = yieldAmounts[i];
                 _id = yieldIds[i];
-                require(_amount != 0, "sp.batchWithdraw: INVALID_YIELD_AMOUNT");
+                require(_amount != 0, "ap.batchWithdraw: INVALID_YIELD_AMOUNT");
                 stakeYield = user.yields[_id];
-                require(block.timestamp > stakeYield.lockUntil, "sp.batchWithdraw: YIELD_LOCKED");
-                require(stakeYield.amount >= _amount, "sp.batchWithdraw: EXCEED_YIELD_STAKED");
+                require(block.timestamp > stakeYield.lockUntil, "ap.batchWithdraw: YIELD_LOCKED");
+                require(stakeYield.amount >= _amount, "ap.batchWithdraw: EXCEED_YIELD_STAKED");
 
                 yieldAmount += _amount;
 
@@ -269,7 +269,7 @@ contract ApeXPool is IApeXPool, Reentrant {
         bool _isEsApeX
     ) external override {
         uint256 now256 = block.timestamp;
-        require(_lockDuration > 0, "sp.updateStakeLock: INVALID_LOCK_DURATION");
+        require(_lockDuration > 0, "ap.updateStakeLock: INVALID_LOCK_DURATION");
 
         uint256 lockTime = factory.lockTime();
         address _staker = msg.sender;
@@ -282,13 +282,13 @@ contract ApeXPool is IApeXPool, Reentrant {
         } else {
             stakeDeposit = user.deposits[_id];
         }
-        require(_lockDuration > stakeDeposit.lockDuration, "sp.updateStakeLock: INVALID_NEW_LOCK");
+        require(_lockDuration > stakeDeposit.lockDuration, "ap.updateStakeLock: INVALID_NEW_LOCK");
 
         if (stakeDeposit.lockFrom == 0) {
-            require(_lockDuration <= lockTime, "sp.updateStakeLock: EXCEED_MAX_LOCK_PERIOD");
+            require(_lockDuration <= lockTime, "ap.updateStakeLock: EXCEED_MAX_LOCK_PERIOD");
             stakeDeposit.lockFrom = now256;
         } else {
-            require(_lockDuration <= lockTime, "sp.updateStakeLock: EXCEED_MAX_LOCK");
+            require(_lockDuration <= lockTime, "ap.updateStakeLock: EXCEED_MAX_LOCK");
         }
 
         uint256 oldWeight = stakeDeposit.weight;

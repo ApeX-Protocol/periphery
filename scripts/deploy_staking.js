@@ -14,26 +14,25 @@ const treasuryAddress = "0x2225F0bEef512e0302D6C4EcE4f71c85C2312c06"; // PCVTrea
 const lpTokenAddress = "0xA0b52dBdB5E4B62c8f3555C047440C555773767a"; // mWETH-mUSDC lp
 
 const apeXPerSec = BigNumber.from("830000000000000000");
+const poolContractEventAddress = "0xDA973715a6cebF43497ef3A382EAd790A440c0fC";
 const secSpanPerUpdate = 14 * 24 * 3600; //two weeks
 const initTimestamp = Math.round(new Date().getTime() / 1000);
 const endTimestamp = initTimestamp + 365 * 24 * 3600 * 3; //3 years after init time
-const sixMonth = 26 * 7 * 24 * 3600;
+const lockTime = 26 * 7 * 24 * 3600;
 const apeXPoolWeight = 21;
 const lpPoolWeight = 79;
 const remainForOtherVest = 50;
 const minRemainRatioAfterBurn = 6000;
 
-let esApeX;
-let veApeX;
-let apeXPool;
-let lpPool;
-let stakingPoolTemplate;
-let stakingPoolFactory;
-let rewardForStaking;
+let esApeX, veApeX, apeXPool, lpPool, stakingPoolTemplate, stakingPoolFactory, rewardForStaking;
 
 const main = async () => {
   await createEsApeX();
   await createPools();
+  // await createEsApeX();
+  // await createPoolCreatedEvent();
+  // await createStakingPool();
+  await createApexPool();
   // await createReward();
 };
 
@@ -44,10 +43,42 @@ async function createEsApeX() {
   console.log(verifyStr, process.env.HARDHAT_NETWORK, esApeX.address);
 }
 
+async function createStakingPool() {
+  await createPools();
+  await stakingPoolFactory.createPool(lpTokenAddress, lpPoolWeight);
+  const StakingPool = await ethers.getContractFactory("StakingPool");
+  lpPool = StakingPool.attach(await stakingPoolFactory.tokenPoolMap(lpTokenAddress));
+  console.log("lpPool:", lpPool.address);
+
+  // Log pool creation events
+  const PoolCreateEvent = await ethers.getContractFactory("PoolCreateEvent");
+  const poolCreateEvent = PoolCreateEvent.attach(poolContractEventAddress);
+  await poolCreateEvent.PoolCreate(stakingPoolFactory.address, lpPool.address, false);
+}
+
+async function createApexPool() {
+  await createPools();
+  const ApeXPool = await ethers.getContractFactory("ApeXPool");
+  apeXPool = await ApeXPool.deploy(stakingPoolFactory.address, apeXAddress);
+  await stakingPoolFactory.registerApeXPool(apeXPool.address, apeXPoolWeight);
+  console.log("ApeXPool:", apeXPool.address);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, apeXPool.address, stakingPoolFactory.address, apeXAddress);
+
+  // Log pool creation events
+  const PoolCreateEvent = await ethers.getContractFactory("PoolCreateEvent");
+  const poolCreateEvent = PoolCreateEvent.attach(poolContractEventAddress);
+  await poolCreateEvent.PoolCreate(stakingPoolFactory.address, apeXPool.address, true);
+}
+
+async function createPoolCreatedEvent() {
+  const PoolCreateEvent = await ethers.getContractFactory("PoolCreateEvent");
+  const poolCreatedEvent = await PoolCreateEvent.deploy();
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, poolCreatedEvent.address);
+}
+
 async function createPools() {
   const StakingPoolFactory = await ethers.getContractFactory("StakingPoolFactory");
   const StakingPool = await ethers.getContractFactory("StakingPool");
-  const ApeXPool = await ethers.getContractFactory("ApeXPool");
   const EsAPEX = await ethers.getContractFactory("EsAPEX");
   const VeAPEX = await ethers.getContractFactory("VeAPEX");
 
@@ -63,7 +94,7 @@ async function createPools() {
     secSpanPerUpdate,
     initTimestamp,
     endTimestamp,
-    sixMonth
+    lockTime
   );
   console.log("StakingPoolFactory:", stakingPoolFactory.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, stakingPoolFactory.address);
@@ -79,10 +110,6 @@ async function createPools() {
   // ]);
   // console.log("StakingPoolFactory:", stakingPoolFactory.address);
 
-  apeXPool = await ApeXPool.deploy(stakingPoolFactory.address, apeXAddress);
-  console.log("ApeXPool:", apeXPool.address);
-  console.log(verifyStr, process.env.HARDHAT_NETWORK, apeXPool.address, stakingPoolFactory.address, apeXAddress);
-
   esApeX = await EsAPEX.deploy();
   console.log("EsAPEX:", esApeX.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, esApeX.address);
@@ -96,12 +123,6 @@ async function createPools() {
   await stakingPoolFactory.setEsApeX(esApeX.address);
   await stakingPoolFactory.setVeApeX(veApeX.address);
   await stakingPoolFactory.setStakingPoolTemplate(stakingPoolTemplate.address);
-
-  await stakingPoolFactory.registerApeXPool(apeXPool.address, apeXPoolWeight);
-
-  await stakingPoolFactory.createPool(lpTokenAddress, lpPoolWeight);
-  lpPool = StakingPool.attach(await stakingPoolFactory.tokenPoolMap(lpTokenAddress));
-  console.log("lpPool:", lpPool.address);
 }
 
 async function createReward() {
