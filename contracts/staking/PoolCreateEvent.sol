@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 contract PoolCreateEvent {
 
-    event PoolCreated(address indexed factory, address indexed pool, bool isApeXPool);
+    event PoolCreated(address indexed factory, bool indexed isApeXPool);
 
-    function PoolCreate(address factory, address pool, bool isApeXPool) external {
-        emit PoolCreated(factory, pool, isApeXPool);
+    function PoolCreate(address factory, bool isApeXPool) external {
+        emit PoolCreated(factory, isApeXPool);
     }
 }
