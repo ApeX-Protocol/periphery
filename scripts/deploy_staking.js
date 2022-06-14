@@ -43,7 +43,7 @@ const main = async () => {
    * 4. 想要创建StakingPool的话，createStakingPool()，需要修改lpTokenAddress
    */
   // await createEsApeX();
-  // await createPoolCreatedEvent();
+  await createPoolCreatedEvent();
   // await createApexPool();
   await createStakingPool();
   // await createReward();
@@ -83,6 +83,7 @@ async function createApexPool() {
 async function createPoolCreatedEvent() {
   const PoolCreateEvent = await ethers.getContractFactory("PoolCreateEvent");
   const poolCreatedEvent = await PoolCreateEvent.deploy();
+  console.log("PoolCreateEvent:", poolCreatedEvent.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, poolCreatedEvent.address);
 }
 
@@ -108,11 +109,11 @@ async function createPools(isApexPool) {
   console.log(verifyStr, process.env.HARDHAT_NETWORK, stakingPoolFactory.address);
 
   const PoolCreateEvent = await ethers.getContractFactory("PoolCreateEvent");
-  const poolCreateEvent = PoolCreateEvent.attach(poolContractEventAddress);
+  const poolCreateEvent = await PoolCreateEvent.attach(poolContractEventAddress);
   await poolCreateEvent.PoolCreate(stakingPoolFactory.address, isApexPool);
 
   const EsAPEX = await ethers.getContractFactory("EsAPEX");
-  const esAPEX = EsAPEX.attach(esApeXAddr);
+  const esAPEX = await EsAPEX.attach(esApeXAddr);
   await esAPEX.addOperator(stakingPoolFactory.address);
 
   // stakingPoolFactory = await upgrades.deployProxy(StakingPoolFactory, [
