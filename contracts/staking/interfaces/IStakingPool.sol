@@ -42,7 +42,7 @@ interface IStakingPool {
 
     function getDepositsLength(address _user) external view returns (uint256);
 
-    function initialize(address _factory, address _poolToken) external;
+    function initialize(address _factory, address _poolToken, uint256 _initTime, uint256 _endTime) external;
 
     /// @notice Process yield reward (esApeX) of msg.sender
     function processRewards() external;

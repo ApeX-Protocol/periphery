@@ -16,16 +16,25 @@ contract ApeXPool is IApeXPool, Reentrant {
     uint256 public yieldRewardsPerWeight;
     uint256 public usersLockingWeight;
     mapping(address => User) public users;
+    uint256 public immutable initTime;
+    uint256 public immutable endTime;
 
-    constructor(address _factory, address _poolToken) {
+    modifier onlyInTimePeriod () {
+        require(initTime <= block.timestamp && block.timestamp <= endTime, "sp: ONLY_IN_TIME_PERIOD");
+        _;
+    }
+
+    constructor(address _factory, address _poolToken, uint256 _initTime, uint256 _endTime) {
         require(_factory != address(0), "ap: INVALID_FACTORY");
         require(_poolToken != address(0), "ap: INVALID_POOL_TOKEN");
 
         factory = IStakingPoolFactory(_factory);
         poolToken = _poolToken;
+        initTime = _initTime;
+        endTime = _endTime;
     }
 
-    function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant {
+    function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant onlyInTimePeriod {
         _stake(_amount, _lockDuration, false);
         IERC20(poolToken).transferFrom(msg.sender, address(this), _amount);
     }
@@ -360,7 +369,7 @@ contract ApeXPool is IApeXPool, Reentrant {
         uint256 newYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         if (usersLockingWeight != 0) {
-            (uint256 apeXReward, ) = factory.calStakingPoolApeXReward(poolToken);
+            (uint256 apeXReward,) = factory.calStakingPoolApeXReward(poolToken);
             newYieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
         }
 
