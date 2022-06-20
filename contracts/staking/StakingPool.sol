@@ -17,13 +17,29 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
     uint256 public yieldRewardsPerWeight;
     uint256 public usersLockingWeight;
     mapping(address => User) public users;
+    uint256 public initTime;
+    uint256 public endTime;
+    bool public beyongEndTime;
 
-    function initialize(address _factory, address _poolToken) external override initializer {
-        factory = IStakingPoolFactory(_factory);
-        poolToken = _poolToken;
+    modifier onlyInTimePeriod () {
+        require(initTime <= block.timestamp && block.timestamp <= endTime, "sp: ONLY_IN_TIME_PERIOD");
+        _;
     }
 
-    function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant {
+    function initialize(address _factory, address _poolToken, uint256 _initTime, uint256 _endTime) external override initializer {
+        factory = IStakingPoolFactory(_factory);
+        poolToken = _poolToken;
+        initTime = _initTime;
+        endTime = _endTime;
+    }
+
+    // for test only, need to be removed
+    function changeTime(uint256 _initTime, uint256 _endTime) external {
+        initTime = _initTime;
+        endTime = _endTime;
+    }
+
+    function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant onlyInTimePeriod {
         require(_amount > 0, "sp.stake: INVALID_AMOUNT");
         uint256 now256 = block.timestamp;
         uint256 lockTime = factory.lockTime();
@@ -155,18 +171,23 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
     }
 
     function syncWeightPrice() public {
+        uint256 apeXReward = factory.syncYieldPriceOfWeight();
+
         if (factory.shouldUpdateRatio()) {
             factory.updateApeXPerSec();
         }
-
-        uint256 apeXReward = factory.syncYieldPriceOfWeight();
 
         if (usersLockingWeight == 0) {
             return;
         }
 
-        yieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
-        emit Synchronized(msg.sender, yieldRewardsPerWeight);
+        if (block.timestamp <= endTime + 3 * 3600 && beyongEndTime == false) {
+            yieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
+            emit Synchronized(msg.sender, yieldRewardsPerWeight);
+        }
+        if (block.timestamp > endTime) {
+            beyongEndTime = true;
+        }
     }
 
     function _processRewards(address _staker, User storage user) internal {
