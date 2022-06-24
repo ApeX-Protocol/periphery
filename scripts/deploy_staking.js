@@ -11,22 +11,24 @@ const verifyStr = "npx hardhat verify --network";
 const wethAddress = "0x655e2b2244934Aea3457E3C56a7438C271778D44";
 const apeXAddress = "0x3f355c9803285248084879521AE81FF4D3185cDD";
 const treasuryAddress = "0x2225F0bEef512e0302D6C4EcE4f71c85C2312c06"; // PCVTreasury address
-const lpTokenAddress = "0x01a3eae4edd0512d7d1e3b57ecd40a1a1b1076ee"; // mWETH-mUSDC lp
+const lpTokenAddress = "0x01a3eae4edd0512d7d1e3b57ecd40a1a1b1076ee"; // mWETH-mUSDC lp testnet
+// const lpTokenAddress = "0xa0b52dbdb5e4b62c8f3555c047440c555773767a"; // mWETH-mUSDC lp dev
 
-const esApeXAddr = "0x42C2522E249136925E1d4955e73344a221fcf8DF";
-const poolContractEventAddress = "0xee2De30D18A6FF97A41B90bcedb6941DDb6D3a6a";
+const esApeXAddr = "0xe1A48F34B569132FAE9f48B57505D00824E04034";
+const poolContractEventAddress = "0x13F2af8122d2566fF5bf2924D381F50cc50647Ea";
 
-const stakingPoolapeXPerSec = BigNumber.from("364090160000000000");
-const apexPoolapeXPerSec = BigNumber.from("45511270000000000");
+const stakingPoolapeXPerSec = BigNumber.from("172973201000000000");
+const apexPoolapeXPerSec = BigNumber.from("21621650000000000");
 const secSpanPerUpdate = 14 * 24 * 3600; //two weeks
 // const initTimestamp = Math.round(new Date().getTime() / 1000);
-const initTimestamp = 1654826400;
-const endTimestamp = initTimestamp + 26 * 7 * 24 * 3600; // 6 month
-const lockTime = 26 * 7 * 24 * 3600;
-const apeXPoolWeight = 21;
-const lpPoolWeight = 79;
+const initTimestamp = 1656043200;
+const endTimestamp = initTimestamp + 4838400;
+const vestTime = 15552000;
+const lockTime = 4838400;
+const apeXPoolWeight = 1;
+const lpPoolWeight = 1;
 const remainForOtherVest = 50;
-const minRemainRatioAfterBurn = 6000;
+const minRemainRatioAfterBurn = 1666;
 
 let esApeX, veApeX, apeXPool, lpPool, stakingPoolTemplate, stakingPoolFactory, rewardForStaking;
 
@@ -40,7 +42,7 @@ const main = async () => {
    */
   // await createEsApeX();
   // await createPoolCreatedEvent();
-  await createApexPool();
+  // await createApexPool();
   await createStakingPool();
   // await createReward();
 };
@@ -55,19 +57,24 @@ async function createEsApeX() {
 
 async function createStakingPool() {
   await createPools(false, stakingPoolapeXPerSec);
-  await stakingPoolFactory.createPool(lpTokenAddress, lpPoolWeight);
+
   const StakingPool = await ethers.getContractFactory("StakingPool");
+  stakingPool = await StakingPool.deploy();
+  await stakingPool.initialize(stakingPoolFactory.address, lpTokenAddress, initTimestamp, endTimestamp);
+
+  await stakingPoolFactory.registerStakingPool(stakingPool.address, lpTokenAddress, lpPoolWeight);
   lpPool = await StakingPool.attach(await stakingPoolFactory.tokenPoolMap(lpTokenAddress));
   console.log("lpPool:", lpPool.address);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, lpPool.address);
 }
 
 async function createApexPool() {
   await createPools(true, apexPoolapeXPerSec);
   const ApeXPool = await ethers.getContractFactory("ApeXPool");
-  apeXPool = await ApeXPool.deploy(stakingPoolFactory.address, apeXAddress, initTimestamp, endTimestamp);
+  apeXPool = await ApeXPool.deploy(stakingPoolFactory.address, apeXAddress, initTimestamp, endTimestamp, vestTime);
   await stakingPoolFactory.registerApeXPool(apeXPool.address, apeXPoolWeight);
   console.log("ApeXPool:", apeXPool.address);
-  console.log(verifyStr, process.env.HARDHAT_NETWORK, apeXPool.address, stakingPoolFactory.address, apeXAddress, initTimestamp, endTimestamp);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, apeXPool.address, stakingPoolFactory.address, apeXAddress, initTimestamp, endTimestamp, vestTime);
 
   const VeAPEX = await ethers.getContractFactory("VeAPEX");
   veApeX = await VeAPEX.deploy(stakingPoolFactory.address);

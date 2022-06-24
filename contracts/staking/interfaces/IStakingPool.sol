@@ -14,6 +14,7 @@ interface IStakingPool {
         uint256 totalWeight; //stake
         uint256 subYieldRewards;
         Deposit[] deposits; //stake slp/alp
+        uint256  lastYieldRewardsPerWeight;
     }
 
     event BatchWithdraw(address indexed by, uint256[] _depositIds, uint256[] _depositAmounts);
@@ -41,6 +42,8 @@ interface IStakingPool {
     function getDeposit(address _user, uint256 _depositId) external view returns (Deposit memory);
 
     function getDepositsLength(address _user) external view returns (uint256);
+
+    function syncWeightPrice() external;
 
     function initialize(address _factory, address _poolToken, uint256 _initTime, uint256 _endTime) external;
 
