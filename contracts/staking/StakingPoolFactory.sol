@@ -26,8 +26,8 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
     uint256 public override minRemainRatioAfterBurn; //10k-based
     uint256 public override remainForOtherVest; //100-based, 50 means half of remain to other vest, half to treasury
     uint256 public priceOfWeight; //multiplied by 10k
-    uint256 public lastTimeUpdatePriceOfWeight;
     address public override stakingPoolTemplate;
+    uint256 public lastTimeUpdatePriceOfWeight;
 
     mapping(address => address) public tokenPoolMap; //token->pool, only for relationships in use
     mapping(address => PoolWeight) public poolWeightMap; //pool->weight, historical pools are also stored
@@ -67,13 +67,19 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
         stakingPoolTemplate = _template;
     }
 
+    function registerStakingPool(address _pool, address _poolToken, uint256 _weight) external onlyOwner {
+        require(_poolToken != address(0), "spf.registerStakingPool: ZERO_ADDRESS");
+        require(_poolToken != apeX, "spf.registerStakingPool: CANT_APEX");
+        _registerPool(_pool, _poolToken, _weight);
+    }
+
     function createPool(address _poolToken, uint256 _weight) external override onlyOwner {
         require(_poolToken != address(0), "spf.createPool: ZERO_ADDRESS");
         require(_poolToken != apeX, "spf.createPool: CANT_APEX");
         require(stakingPoolTemplate != address(0), "spf.createPool: ZERO_TEMPLATE");
 
         address pool = Clones.clone(stakingPoolTemplate);
-        IStakingPool(pool).initialize(address(this), _poolToken);
+        IStakingPool(pool).initialize(address(this), _poolToken, lastUpdateTimestamp, endTimestamp);
 
         _registerPool(pool, _poolToken, _weight);
     }
@@ -85,43 +91,16 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
         _registerPool(_pool, poolToken, _weight);
     }
 
-    function unregisterPool(address _pool) external override onlyOwner {
-        require(poolWeightMap[_pool].weight != 0, "spf.unregisterPool: POOL_NOT_REGISTERED");
-        require(poolWeightMap[_pool].exitYieldPriceOfWeight == 0, "spf.unregisterPool: POOL_HAS_UNREGISTERED");
-
-        priceOfWeight += ((_calPendingFactoryReward() * tenK) / totalWeight);
-        lastTimeUpdatePriceOfWeight = block.timestamp;
-
-        totalWeight -= poolWeightMap[_pool].weight;
-        poolWeightMap[_pool].exitYieldPriceOfWeight = priceOfWeight;
-        delete tokenPoolMap[IStakingPool(_pool).poolToken()];
-
-        emit PoolUnRegistered(msg.sender, _pool);
-    }
-
-    function changePoolWeight(address _pool, uint256 _weight) external override onlyOwner {
-        require(poolWeightMap[_pool].weight > 0, "spf.changePoolWeight: POOL_NOT_EXIST");
-        require(poolWeightMap[_pool].exitYieldPriceOfWeight == 0, "spf.changePoolWeight: POOL_INVALID");
-        require(_weight != 0, "spf.changePoolWeight: CANT_CHANGE_TO_ZERO_WEIGHT");
-
-        if (totalWeight != 0) {
-            priceOfWeight += ((_calPendingFactoryReward() * tenK) / totalWeight);
-            lastTimeUpdatePriceOfWeight = block.timestamp;
-        }
-
-        totalWeight = totalWeight + _weight - poolWeightMap[_pool].weight;
-        poolWeightMap[_pool].weight = _weight;
-        poolWeightMap[_pool].lastYieldPriceOfWeight = priceOfWeight;
-
-        emit WeightUpdated(msg.sender, _pool, _weight);
-    }
-
     function updateApeXPerSec() external override {
         uint256 currentTimestamp = block.timestamp;
         require(currentTimestamp >= lastUpdateTimestamp + secSpanPerUpdate, "spf.updateApeXPerSec: TOO_FREQUENT");
         require(currentTimestamp <= endTimestamp, "spf.updateApeXPerSec: END");
 
-        apeXPerSec = (apeXPerSec * 97) / 100;
+        uint256 count = (currentTimestamp - lastUpdateTimestamp) / secSpanPerUpdate;
+        for (uint256 i = 0; i < count; i++) {
+            apeXPerSec = (apeXPerSec * 97) / 100;
+        }
+        // apeXPerSec = (apeXPerSec * 97) / 100;
         lastUpdateTimestamp = currentTimestamp;
 
         emit UpdateApeXPerSec(apeXPerSec);
@@ -129,9 +108,12 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
 
     function syncYieldPriceOfWeight() external override returns (uint256) {
         (uint256 reward, uint256 newPriceOfWeight) = _calStakingPoolApeXReward(msg.sender);
+        priceOfWeight = newPriceOfWeight;
         emit SyncYieldPriceOfWeight(poolWeightMap[msg.sender].lastYieldPriceOfWeight, newPriceOfWeight);
+        lastTimeUpdatePriceOfWeight = block.timestamp;
 
         poolWeightMap[msg.sender].lastYieldPriceOfWeight = newPriceOfWeight;
+
         return reward;
     }
 
@@ -203,10 +185,10 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
     }
 
     function calStakingPoolApeXReward(address token)
-        external
-        view
-        override
-        returns (uint256 reward, uint256 newPriceOfWeight)
+    external
+    view
+    override
+    returns (uint256 reward, uint256 newPriceOfWeight)
     {
         address pool = tokenPoolMap[token];
         return _calStakingPoolApeXReward(pool);
@@ -232,9 +214,9 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
 
         tokenPoolMap[_poolToken] = _pool;
         poolWeightMap[_pool] = PoolWeight({
-            weight: _weight,
-            lastYieldPriceOfWeight: priceOfWeight,
-            exitYieldPriceOfWeight: 0
+        weight : _weight,
+        lastYieldPriceOfWeight : priceOfWeight,
+        exitYieldPriceOfWeight : 0
         });
         totalWeight += _weight;
 
@@ -244,8 +226,8 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
     function _calPendingFactoryReward() internal view returns (uint256 reward) {
         uint256 currentTimestamp = block.timestamp;
         uint256 secPassed = currentTimestamp > endTimestamp
-            ? endTimestamp - lastTimeUpdatePriceOfWeight
-            : currentTimestamp - lastTimeUpdatePriceOfWeight;
+        ? endTimestamp - lastTimeUpdatePriceOfWeight
+        : currentTimestamp - lastTimeUpdatePriceOfWeight;
         reward = secPassed * apeXPerSec;
     }
 
@@ -261,7 +243,6 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
         if (totalWeight > 0) {
             newPriceOfWeight += ((_calPendingFactoryReward() * tenK) / totalWeight);
         }
-
         reward = (pw.weight * (newPriceOfWeight - pw.lastYieldPriceOfWeight)) / tenK;
     }
 
@@ -298,4 +279,5 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
 
         emit SetVeApeX(_veApeX);
     }
+
 }
