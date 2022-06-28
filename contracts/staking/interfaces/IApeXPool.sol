@@ -22,6 +22,7 @@ interface IApeXPool {
         Deposit[] deposits; //stake ApeX
         Yield[] yields; //vest esApeX
         Deposit[] esDeposits; //stake esApeX
+        uint256  lastYieldRewardsPerWeight;
     }
 
     event BatchWithdraw(
@@ -68,6 +69,8 @@ interface IApeXPool {
     function getDeposit(address _user, uint256 _depositId) external view returns (Deposit memory);
 
     function getDepositsLength(address _user) external view returns (uint256);
+
+    function syncWeightPrice() external;
 
     function getYield(address _user, uint256 _yieldId) external view returns (Yield memory);
 

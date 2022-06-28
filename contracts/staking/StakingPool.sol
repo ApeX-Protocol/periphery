@@ -17,13 +17,23 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
     uint256 public yieldRewardsPerWeight;
     uint256 public usersLockingWeight;
     mapping(address => User) public users;
+    uint256 public initTime;
+    uint256 public endTime;
+    bool public beyongEndTime;
 
-    function initialize(address _factory, address _poolToken) external override initializer {
-        factory = IStakingPoolFactory(_factory);
-        poolToken = _poolToken;
+    modifier onlyInTimePeriod () {
+        require(initTime <= block.timestamp && block.timestamp <= endTime, "sp: ONLY_IN_TIME_PERIOD");
+        _;
     }
 
-    function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant {
+    function initialize(address _factory, address _poolToken, uint256 _initTime, uint256 _endTime) external override initializer {
+        factory = IStakingPoolFactory(_factory);
+        poolToken = _poolToken;
+        initTime = _initTime;
+        endTime = _endTime;
+    }
+
+    function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant onlyInTimePeriod {
         require(_amount > 0, "sp.stake: INVALID_AMOUNT");
         uint256 now256 = block.timestamp;
         uint256 lockTime = factory.lockTime();
@@ -41,17 +51,18 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
         uint256 stakeWeight = ((_lockDuration * WEIGHT_MULTIPLIER) / lockTime + WEIGHT_MULTIPLIER) * _amount;
         uint256 depositId = user.deposits.length;
         Deposit memory deposit = Deposit({
-            amount: _amount,
-            weight: stakeWeight,
-            lockFrom: lockFrom,
-            lockDuration: _lockDuration
+        amount : _amount,
+        weight : stakeWeight,
+        lockFrom : lockFrom,
+        lockDuration : _lockDuration
         });
 
         user.deposits.push(deposit);
         user.tokenAmount += _amount;
+        user.subYieldRewards = user.subYieldRewards + (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER);
         user.totalWeight += stakeWeight;
-        user.subYieldRewards = (user.totalWeight * yieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
         usersLockingWeight += stakeWeight;
+        user.lastYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         emit Staked(_staker, depositId, _amount, lockFrom, lockFrom + _lockDuration);
         IERC20(poolToken).transferFrom(msg.sender, address(this), _amount);
@@ -83,10 +94,10 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
             require(stakeDeposit.amount >= _amount, "sp.batchWithdraw: EXCEED_DEPOSIT_STAKED");
 
             newWeight =
-                ((stakeDeposit.lockDuration * WEIGHT_MULTIPLIER) /
-                    lockTime +
-                    WEIGHT_MULTIPLIER) *
-                (stakeDeposit.amount - _amount);
+            ((stakeDeposit.lockDuration * WEIGHT_MULTIPLIER) /
+            lockTime +
+            WEIGHT_MULTIPLIER) *
+            (stakeDeposit.amount - _amount);
 
             stakeAmount += _amount;
             deltaUsersLockingWeight += (stakeDeposit.weight - newWeight);
@@ -100,9 +111,10 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
             }
         }
 
+        user.subYieldRewards = user.subYieldRewards + (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER);
         user.totalWeight -= deltaUsersLockingWeight;
         usersLockingWeight -= deltaUsersLockingWeight;
-        user.subYieldRewards = (user.totalWeight * yieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
+        user.lastYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         if (stakeAmount > 0) {
             user.tokenAmount -= stakeAmount;
@@ -134,14 +146,15 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
 
         uint256 oldWeight = stakeDeposit.weight;
         uint256 newWeight = ((_lockDuration * WEIGHT_MULTIPLIER) /
-            lockTime +
-            WEIGHT_MULTIPLIER) * stakeDeposit.amount;
+        lockTime +
+        WEIGHT_MULTIPLIER) * stakeDeposit.amount;
 
         stakeDeposit.lockDuration = _lockDuration;
         stakeDeposit.weight = newWeight;
+        user.subYieldRewards = user.subYieldRewards + (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER);
         user.totalWeight = user.totalWeight - oldWeight + newWeight;
-        user.subYieldRewards = (user.totalWeight * yieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
         usersLockingWeight = usersLockingWeight - oldWeight + newWeight;
+        user.lastYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         emit UpdateStakeLock(_staker, _id, stakeDeposit.lockFrom, stakeDeposit.lockFrom + _lockDuration);
     }
@@ -151,22 +164,31 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
         User storage user = users[staker];
 
         _processRewards(staker, user);
-        user.subYieldRewards = (user.totalWeight * yieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
+        user.subYieldRewards = user.subYieldRewards + (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER);
+        user.lastYieldRewardsPerWeight = yieldRewardsPerWeight;
     }
 
-    function syncWeightPrice() public {
+    function syncWeightPrice() override public {
+        uint256 apeXReward = 0;
+        if (beyongEndTime == false) {
+            apeXReward = factory.syncYieldPriceOfWeight();
+        }
+
         if (factory.shouldUpdateRatio()) {
             factory.updateApeXPerSec();
         }
-
-        uint256 apeXReward = factory.syncYieldPriceOfWeight();
 
         if (usersLockingWeight == 0) {
             return;
         }
 
-        yieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
-        emit Synchronized(msg.sender, yieldRewardsPerWeight);
+        if (block.timestamp <= endTime + 3 * 3600 && beyongEndTime == false) {
+            yieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
+            emit Synchronized(msg.sender, yieldRewardsPerWeight);
+        }
+        if (block.timestamp > endTime) {
+            beyongEndTime = true;
+        }
     }
 
     function _processRewards(address _staker, User storage user) internal {
@@ -174,9 +196,8 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
 
         //if no yield
         if (user.totalWeight == 0) return;
-        uint256 yieldAmount = (user.totalWeight * yieldRewardsPerWeight) /
-            REWARD_PER_WEIGHT_MULTIPLIER -
-            user.subYieldRewards;
+        uint256 yieldAmount = (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight)) /
+        REWARD_PER_WEIGHT_MULTIPLIER;
         if (yieldAmount == 0) return;
 
         factory.mintEsApeX(_staker, yieldAmount);
@@ -187,23 +208,23 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
         uint256 newYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         if (usersLockingWeight != 0) {
-            (uint256 apeXReward, ) = factory.calStakingPoolApeXReward(poolToken);
+            (uint256 apeXReward,) = factory.calStakingPoolApeXReward(poolToken);
             newYieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
         }
 
         User memory user = users[_staker];
-        pending = (user.totalWeight * newYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER - user.subYieldRewards;
+        pending = (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight)) / REWARD_PER_WEIGHT_MULTIPLIER;
     }
 
     function getStakeInfo(address _user)
-        external
-        view
-        override
-        returns (
-            uint256 tokenAmount,
-            uint256 totalWeight,
-            uint256 subYieldRewards
-        )
+    external
+    view
+    override
+    returns (
+        uint256 tokenAmount,
+        uint256 totalWeight,
+        uint256 subYieldRewards
+    )
     {
         User memory user = users[_user];
         return (user.tokenAmount, user.totalWeight, user.subYieldRewards);

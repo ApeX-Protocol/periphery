@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IStakingPoolFactory {
-    
+
     struct PoolWeight {
         uint256 weight;
         uint256 lastYieldPriceOfWeight; //multiplied by 10000
@@ -12,8 +12,6 @@ interface IStakingPoolFactory {
     event WeightUpdated(address indexed by, address indexed pool, uint256 weight);
 
     event PoolRegistered(address indexed by, address indexed poolToken, address indexed pool, uint256 weight);
-
-    event PoolUnRegistered(address indexed by, address indexed pool);
 
     event SetYieldLockTime(uint256 yieldLockTime);
 
@@ -96,9 +94,6 @@ interface IStakingPoolFactory {
     /// @param weight pool's weight between all other stakingPools.
     function registerApeXPool(address pool, uint256 weight) external;
 
-    /// @notice unregister an exist pool
-    function unregisterPool(address pool) external;
-
     /// @notice mint apex to staker
     /// @param to the staker.
     /// @param amount apex amount.
@@ -107,11 +102,6 @@ interface IStakingPoolFactory {
     function transferYieldToTreasury(uint256 amount) external;
 
     function withdrawApeX(address to, uint256 amount) external;
-
-    /// @notice change a pool's weight
-    /// @param poolAddr the pool.
-    /// @param weight new weight.
-    function changePoolWeight(address poolAddr, uint256 weight) external;
 
     /// @notice set minimum reward ratio when force withdraw locked rewards
     function setMinRemainRatioAfterBurn(uint256 _minRemainRatioAfterBurn) external;
@@ -137,4 +127,5 @@ interface IStakingPoolFactory {
     function setEsApeX(address _esApeX) external;
 
     function setVeApeX(address _veApeX) external;
+
 }
