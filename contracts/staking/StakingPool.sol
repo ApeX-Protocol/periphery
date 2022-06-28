@@ -33,12 +33,6 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
         endTime = _endTime;
     }
 
-    // for test only, need to be removed
-    function changeTime(uint256 _initTime, uint256 _endTime) external {
-        initTime = _initTime;
-        endTime = _endTime;
-    }
-
     function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant onlyInTimePeriod {
         require(_amount > 0, "sp.stake: INVALID_AMOUNT");
         uint256 now256 = block.timestamp;
