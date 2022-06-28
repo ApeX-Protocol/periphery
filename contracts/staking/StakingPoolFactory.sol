@@ -96,7 +96,11 @@ contract StakingPoolFactory is IStakingPoolFactory, Ownable, Initializable {
         require(currentTimestamp >= lastUpdateTimestamp + secSpanPerUpdate, "spf.updateApeXPerSec: TOO_FREQUENT");
         require(currentTimestamp <= endTimestamp, "spf.updateApeXPerSec: END");
 
-        apeXPerSec = (apeXPerSec * 97) / 100;
+        uint256 count = (currentTimestamp - lastUpdateTimestamp) / secSpanPerUpdate;
+        for (uint256 i = 0; i < count; i++) {
+            apeXPerSec = (apeXPerSec * 97) / 100;
+        }
+        // apeXPerSec = (apeXPerSec * 97) / 100;
         lastUpdateTimestamp = currentTimestamp;
 
         emit UpdateApeXPerSec(apeXPerSec);
