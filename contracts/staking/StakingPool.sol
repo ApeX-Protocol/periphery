@@ -204,7 +204,7 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
         emit MintEsApeX(_staker, yieldAmount);
     }
 
-    function pendingYieldRewards(address _staker) public returns (uint256 pending) {
+    function pendingYieldRewards(address _staker) external view returns (uint256 pending) {
         uint256 newYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         if (usersLockingWeight != 0) {

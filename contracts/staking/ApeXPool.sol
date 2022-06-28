@@ -371,7 +371,7 @@ contract ApeXPool is IApeXPool, Reentrant {
         factory.transferEsApeXFrom(msg.sender, address(this), vestAmount);
     }
 
-    function pendingYieldRewards(address _staker) public returns (uint256 pending) {
+    function pendingYieldRewards(address _staker) external view returns (uint256 pending) {
         uint256 newYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         if (usersLockingWeight != 0) {
