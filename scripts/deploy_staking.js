@@ -43,12 +43,12 @@ const main = async () => {
   // await createEsApeX();
   // await createPoolCreatedEvent();
   // await createApexPool();
-  await createStakingPool();
+  // await createStakingPool();
   // await createReward();
+  await createAggregateQuery();
 };
 
 async function createEsApeX() {
-
   const EsAPEX = await ethers.getContractFactory("EsAPEX");
   esApeX = await EsAPEX.deploy();
   console.log("EsAPEX:", esApeX.address);
@@ -74,7 +74,16 @@ async function createApexPool() {
   apeXPool = await ApeXPool.deploy(stakingPoolFactory.address, apeXAddress, initTimestamp, endTimestamp, vestTime);
   await stakingPoolFactory.registerApeXPool(apeXPool.address, apeXPoolWeight);
   console.log("ApeXPool:", apeXPool.address);
-  console.log(verifyStr, process.env.HARDHAT_NETWORK, apeXPool.address, stakingPoolFactory.address, apeXAddress, initTimestamp, endTimestamp, vestTime);
+  console.log(
+    verifyStr,
+    process.env.HARDHAT_NETWORK,
+    apeXPool.address,
+    stakingPoolFactory.address,
+    apeXAddress,
+    initTimestamp,
+    endTimestamp,
+    vestTime
+  );
 
   const VeAPEX = await ethers.getContractFactory("VeAPEX");
   veApeX = await VeAPEX.deploy(stakingPoolFactory.address);
@@ -141,6 +150,13 @@ async function createReward() {
   rewardForStaking = await RewardForStaking.deploy(wethAddress);
   console.log("RewardForStaking:", rewardForStaking.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, rewardForStaking.address, wethAddress);
+}
+
+async function createAggregateQuery() {
+  const AggregateQuery = await ethers.getContractFactory("AggregateQuery");
+  const aggregateQuery = await AggregateQuery.deploy();
+  console.log("AggregateQuery:", aggregateQuery.address);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, aggregateQuery.address);
 }
 
 main()
