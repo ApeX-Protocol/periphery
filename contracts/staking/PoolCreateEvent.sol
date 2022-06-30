@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-contract PoolCreateEvent {
+import "../utils/Ownable.sol";
 
-    event PoolCreated(address indexed factory, address indexed pool, bool isApeXPool);
+contract PoolCreateEvent is Ownable {
 
-    function PoolCreate(address factory, address pool, bool isApeXPool) external {
-        emit PoolCreated(factory, pool, isApeXPool);
+    constructor() {
+        owner = msg.sender;
+    }
+
+    event PoolCreated(address indexed factory, bool indexed isApeXPool, uint256 initTimestamp, uint256 endTimestamp);
+
+    function PoolCreate(address factory, bool isApeXPool, uint256 initTimestamp, uint256 endTimestamp) external onlyOwner {
+        emit PoolCreated(factory, isApeXPool, initTimestamp, endTimestamp);
     }
 }

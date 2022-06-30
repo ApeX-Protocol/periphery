@@ -16,21 +16,33 @@ contract ApeXPool is IApeXPool, Reentrant {
     uint256 public yieldRewardsPerWeight;
     uint256 public usersLockingWeight;
     mapping(address => User) public users;
+    uint256 public immutable initTime;
+    uint256 public immutable endTime;
+    uint256 public immutable vestTime;
+    bool public beyongEndTime;
 
-    constructor(address _factory, address _poolToken) {
+    modifier onlyInTimePeriod () {
+        require(initTime <= block.timestamp && block.timestamp <= endTime, "sp: ONLY_IN_TIME_PERIOD");
+        _;
+    }
+
+    constructor(address _factory, address _poolToken, uint256 _initTime, uint256 _endTime, uint256 _vestTime) {
         require(_factory != address(0), "ap: INVALID_FACTORY");
         require(_poolToken != address(0), "ap: INVALID_POOL_TOKEN");
 
         factory = IStakingPoolFactory(_factory);
         poolToken = _poolToken;
+        initTime = _initTime;
+        endTime = _endTime;
+        vestTime = _vestTime;
     }
 
-    function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant {
+    function stake(uint256 _amount, uint256 _lockDuration) external override nonReentrant onlyInTimePeriod {
         _stake(_amount, _lockDuration, false);
         IERC20(poolToken).transferFrom(msg.sender, address(this), _amount);
     }
 
-    function stakeEsApeX(uint256 _amount, uint256 _lockDuration) external override {
+    function stakeEsApeX(uint256 _amount, uint256 _lockDuration) external override nonReentrant onlyInTimePeriod {
         _stake(_amount, _lockDuration, true);
         factory.transferEsApeXFrom(msg.sender, address(factory), _amount);
     }
@@ -71,11 +83,12 @@ contract ApeXPool is IApeXPool, Reentrant {
 
         factory.mintVeApeX(_staker, stakeWeight / WEIGHT_MULTIPLIER);
         user.tokenAmount += _amount;
+        user.subYieldRewards = user.subYieldRewards + (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER);
         user.totalWeight += stakeWeight;
-        user.subYieldRewards = (user.totalWeight * yieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
         usersLockingWeight += stakeWeight;
+        user.lastYieldRewardsPerWeight = yieldRewardsPerWeight;
 
-        emit Staked(_staker, depositId, _isEsApeX, _amount, lockFrom, lockFrom + _lockDuration);
+    emit Staked(_staker, depositId, _isEsApeX, _amount, lockFrom, lockFrom + _lockDuration);
     }
 
     function batchWithdraw(
@@ -174,9 +187,10 @@ contract ApeXPool is IApeXPool, Reentrant {
         }
 
         factory.burnVeApeX(msg.sender, deltaUsersLockingWeight / WEIGHT_MULTIPLIER);
+        user.subYieldRewards = user.subYieldRewards + (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER);
         user.totalWeight -= deltaUsersLockingWeight;
         usersLockingWeight -= deltaUsersLockingWeight;
-        user.subYieldRewards = (user.totalWeight * yieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
+        user.lastYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         {
             uint256 yieldAmount;
@@ -234,24 +248,14 @@ contract ApeXPool is IApeXPool, Reentrant {
                     (yield.amount *
                         (minRemainRatio +
                             ((10000 - minRemainRatio) * (now256 - yield.lockFrom)) /
-                            factory.lockTime())) /
+                            vestTime)) /
                     10000;
             }
             delete user.yields[_yieldIds[i]];
         }
 
         uint256 remainApeX = deltaTotalAmount - yieldAmount;
-
-        //half of remaining esApeX to boost remain vester
-        uint256 remainForOtherVest = factory.remainForOtherVest();
-        uint256 newYieldRewardsPerWeight = yieldRewardsPerWeight +
-            ((remainApeX * REWARD_PER_WEIGHT_MULTIPLIER) * remainForOtherVest) /
-            100 /
-            usersLockingWeight;
-        yieldRewardsPerWeight = newYieldRewardsPerWeight;
-
-        //half of remaining esApeX to transfer to treasury in apeX
-        factory.transferYieldToTreasury(remainApeX - (remainApeX * remainForOtherVest) / 100);
+        factory.transferYieldToTreasury(remainApeX);
 
         user.tokenAmount -= deltaTotalAmount;
         factory.burnEsApeX(address(this), deltaTotalAmount);
@@ -299,9 +303,10 @@ contract ApeXPool is IApeXPool, Reentrant {
         factory.mintVeApeX(_staker, (newWeight - oldWeight) / WEIGHT_MULTIPLIER);
         stakeDeposit.lockDuration = _lockDuration;
         stakeDeposit.weight = newWeight;
+        user.subYieldRewards = user.subYieldRewards + (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER);
         user.totalWeight = user.totalWeight - oldWeight + newWeight;
-        user.subYieldRewards = (user.totalWeight * yieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
         usersLockingWeight = usersLockingWeight - oldWeight + newWeight;
+        user.lastYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         emit UpdateStakeLock(_staker, _id, _isEsApeX, stakeDeposit.lockFrom, stakeDeposit.lockFrom + _lockDuration);
     }
@@ -311,20 +316,31 @@ contract ApeXPool is IApeXPool, Reentrant {
         User storage user = users[staker];
 
         _processRewards(staker, user);
-        user.subYieldRewards = (user.totalWeight * yieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER;
+        user.subYieldRewards = user.subYieldRewards + (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER);
+        user.lastYieldRewardsPerWeight = yieldRewardsPerWeight;
     }
 
-    function syncWeightPrice() public {
+    function syncWeightPrice() override public {
+        uint256 apeXReward = 0;
+        if (beyongEndTime == false) {
+            apeXReward = factory.syncYieldPriceOfWeight();
+        }
+
         if (factory.shouldUpdateRatio()) {
             factory.updateApeXPerSec();
         }
 
-        uint256 apeXReward = factory.syncYieldPriceOfWeight();
         if (usersLockingWeight == 0) {
             return;
         }
-        yieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
-        emit Synchronized(msg.sender, yieldRewardsPerWeight);
+
+        if (block.timestamp <= endTime + 3 * 3600 && beyongEndTime == false) {
+            yieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
+            emit Synchronized(msg.sender, yieldRewardsPerWeight);
+        }
+        if (block.timestamp > endTime) {
+            beyongEndTime = true;
+        }
     }
 
     //update weight price, then if apeX, add deposits; if not, stake as pool.
@@ -333,9 +349,8 @@ contract ApeXPool is IApeXPool, Reentrant {
 
         //if no yield
         if (user.totalWeight == 0) return;
-        uint256 yieldAmount = (user.totalWeight * yieldRewardsPerWeight) /
-            REWARD_PER_WEIGHT_MULTIPLIER -
-            user.subYieldRewards;
+        uint256 yieldAmount = (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight)) /
+        REWARD_PER_WEIGHT_MULTIPLIER;
         if (yieldAmount == 0) return;
 
         //mint esApeX to _staker
@@ -347,7 +362,7 @@ contract ApeXPool is IApeXPool, Reentrant {
         User storage user = users[msg.sender];
 
         uint256 now256 = block.timestamp;
-        uint256 lockUntil = now256 + factory.lockTime();
+        uint256 lockUntil = now256 + vestTime;
         emit YieldClaimed(msg.sender, user.yields.length, vestAmount, now256, lockUntil);
 
         user.yields.push(Yield({amount: vestAmount, lockFrom: now256, lockUntil: lockUntil}));
@@ -360,12 +375,12 @@ contract ApeXPool is IApeXPool, Reentrant {
         uint256 newYieldRewardsPerWeight = yieldRewardsPerWeight;
 
         if (usersLockingWeight != 0) {
-            (uint256 apeXReward, ) = factory.calStakingPoolApeXReward(poolToken);
+            (uint256 apeXReward,) = factory.calStakingPoolApeXReward(poolToken);
             newYieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
         }
 
         User memory user = users[_staker];
-        pending = (user.totalWeight * newYieldRewardsPerWeight) / REWARD_PER_WEIGHT_MULTIPLIER - user.subYieldRewards;
+        pending = (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight)) / REWARD_PER_WEIGHT_MULTIPLIER;
     }
 
     function getStakeInfo(address _user)
