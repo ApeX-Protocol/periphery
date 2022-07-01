@@ -237,16 +237,4 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
     function getDepositsLength(address _user) external view override returns (uint256) {
         return users[_user].deposits.length;
     }
-
-    function getYieldRewardsPerWeight() external view override returns (uint256) {
-        return yieldRewardsPerWeight;
-    }
-
-    function getUsersLockingWeight() external view override returns (uint256) {
-        return usersLockingWeight;
-    }
-
-    function getUsers(address user) external override view returns (User memory) {
-        return users[user];
-    }
 }
