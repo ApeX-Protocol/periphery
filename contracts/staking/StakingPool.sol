@@ -213,7 +213,7 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
         }
 
         User memory user = users[_staker];
-        pending = (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight)) / REWARD_PER_WEIGHT_MULTIPLIER;
+        pending = (user.totalWeight * (newYieldRewardsPerWeight - user.lastYieldRewardsPerWeight)) / REWARD_PER_WEIGHT_MULTIPLIER;
     }
 
     function getStakeInfo(address _user)
@@ -236,5 +236,17 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
 
     function getDepositsLength(address _user) external view override returns (uint256) {
         return users[_user].deposits.length;
+    }
+
+    function getYieldRewardsPerWeight() external view override returns (uint256) {
+        return yieldRewardsPerWeight;
+    }
+
+    function getUsersLockingWeight() external view override returns (uint256) {
+        return usersLockingWeight;
+    }
+
+    function getUsers(address user) external override view returns (User memory) {
+        return users[user];
     }
 }
