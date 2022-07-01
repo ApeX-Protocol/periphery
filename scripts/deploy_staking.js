@@ -44,8 +44,9 @@ const main = async () => {
   // await createEsApeX();
   // await createPoolCreatedEvent();
   // await createApexPool();
-  await createStakingPool();
+  // await createStakingPool();
   // await createReward();
+  await createAggregateQuery();
 };
 
 async function createEsApeX() {
@@ -156,6 +157,13 @@ async function createReward() {
   rewardForStaking = await RewardForStaking.deploy(wethAddress);
   console.log("RewardForStaking:", rewardForStaking.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, rewardForStaking.address, wethAddress);
+}
+
+async function createAggregateQuery() {
+  const AggregateQuery = await ethers.getContractFactory("AggregateQuery");
+  const aggregateQuery = await AggregateQuery.deploy();
+  console.log("AggregateQuery:", aggregateQuery.address);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, aggregateQuery.address);
 }
 
 main()
