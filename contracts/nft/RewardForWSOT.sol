@@ -11,6 +11,7 @@ contract RewardForWSOT is Ownable {
     uint256 public index;
     uint256[] public tokenIds;
     mapping(address => bool) public isWinner;
+    mapping(address => bool) public isClaimed;
 
     constructor(address nft_) {
         nft = nft_;
@@ -45,6 +46,7 @@ contract RewardForWSOT is Ownable {
                 IERC721(nft).safeTransferFrom(address(this), msg.sender, tokenId);
                 isWinner[msg.sender] = false;
                 index = index +1;
+                isClaimed[msg.sender] = true;
                 emit ClaimNFT(msg.sender, tokenId);
                 return tokenId;
             } else {

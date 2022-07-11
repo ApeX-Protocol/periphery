@@ -133,7 +133,7 @@ async function createMulticall2() {
 
 async function createRewardForWSOT() {
   if (squidNft == null) {
-    const nftAddress = "0xc1Fc36665f5fd6C68c4FA4D8943312163149D7E1";
+    const nftAddress = "0x712CB39015ca286947fDd40e14Fe88294fBc9813";
     const NftSquid = await ethers.getContractFactory("NftSquid");
     squidNft = NftSquid.attach(nftAddress);
   }
