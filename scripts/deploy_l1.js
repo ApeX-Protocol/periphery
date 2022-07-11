@@ -35,9 +35,10 @@ const main = async () => {
   // await createApeXToken();
   // await createVipNft();
   // await createNftSquid();
-  await createNFTRebate();
+  // await createNFTRebate();
   // await createGenesisNFT();
   // await createMulticall2();
+  await createRewardForWSOT();
 };
 
 async function createApeXToken() {
@@ -128,6 +129,18 @@ async function createMulticall2() {
   let multicall2 = await Multicall2.deploy();
   console.log("Multicall2:", multicall2.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, multicall2.address);
+}
+
+async function createRewardForWSOT() {
+  if (squidNft == null) {
+    const nftAddress = "0x712CB39015ca286947fDd40e14Fe88294fBc9813";
+    const NftSquid = await ethers.getContractFactory("NftSquid");
+    squidNft = NftSquid.attach(nftAddress);
+  }
+  const RewardForWSOT = await ethers.getContractFactory("RewardForWSOT");
+  const rewardForWSOT = await RewardForWSOT.deploy(squidNft.address);
+  console.log("RewardForWSOT:", rewardForWSOT.address);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, rewardForWSOT.address, squidNft.address);
 }
 
 main()
