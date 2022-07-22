@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+// const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
 const verifyStr = "npx hardhat verify --network";
 
@@ -133,7 +133,7 @@ async function createMulticall2() {
 
 async function createRewardForWSOT() {
   if (squidNft == null) {
-    const nftAddress = "0x712CB39015ca286947fDd40e14Fe88294fBc9813";
+    const nftAddress = "0x7Af3460d552f832fD7E2DE973c628ACeA59B0712";
     const NftSquid = await ethers.getContractFactory("NftSquid");
     squidNft = NftSquid.attach(nftAddress);
   }
