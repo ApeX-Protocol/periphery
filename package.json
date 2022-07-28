@@ -42,7 +42,8 @@
     "deploy_staking_test": "hardhat run scripts/deploy_staking.js --network arbitrumTestnet",
     "deploy_referral_test": "hardhat run scripts/deploy_referral.js --network arbitrumTestnet",
     "deploy_nft_rebate_test": "hardhat run scripts/deploy_nft_rebate.js --network arbitrumTestnet",
-    "deploy_merkle_test": "hardhat run scripts/deploy_merkle.js --network arbitrumTestnet"
+    "deploy_merkle_test": "hardhat run scripts/deploy_merkle.js --network arbitrumTestnet",
+    "deploy_banana_test": "hardhat run scripts/deploy_banana.js --network arbitrumTestnet"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
