@@ -32,7 +32,7 @@ contract BananaDistributor is Ownable, AnalyticMath {
         address rewardRecipient_,
         uint256 duration_,
         uint256 distributeTime_,
-        uint256 lastReward_,
+        uint256 initReward_,
         uint256 delta_
     ) {
         owner = msg.sender;
@@ -41,7 +41,7 @@ contract BananaDistributor is Ownable, AnalyticMath {
         rewardRecipient = rewardRecipient_;
         duration = duration_;
         distributeTime = distributeTime_;
-        lastReward = lastReward_;
+        lastReward = initReward_;
         delta = delta_;
     }
 
@@ -79,7 +79,7 @@ contract BananaDistributor is Ownable, AnalyticMath {
     function distribute(uint256 fees) external returns (uint256) {
         require(!emergency, "EMERGENCY");
         require(msg.sender == keeper, "forbidden");
-        require(distributeTime >= block.timestamp, "not right time");
+        require(block.timestamp >= distributeTime, "not right time");
         
         uint256 newReward = lastReward;
         if (lastFees > 0) {

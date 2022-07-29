@@ -41,6 +41,10 @@ module.exports = {
       url: process.env.RINKEBY_RPC,
       accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
     },
+    goerli: {
+      url: process.env.GOERLI_RPC,
+      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
+    },
     arbitrumOne: {
       url: process.env.ARBITRUM_ONE_RPC,
       accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
@@ -59,7 +63,7 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.ARBISCAN_API_KEY,
+    apiKey: process.env.ETHERSCAN_API_KEY,
     // apiKey: {
     //   mainnet: process.env.ETHERSCAN_API_KEY,
     //   rinkeby: process.env.ETHERSCAN_API_KEY,

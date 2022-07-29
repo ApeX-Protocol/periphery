@@ -55,9 +55,9 @@ contract Banana is IERC20, Ownable {
         uint256 apeXBalance = IERC20(apeXToken).balanceOf(address(this));
         uint256 mintAmount;
         if (totalSupply == 0) {
-            mintAmount = apeXAmount;
+            mintAmount = apeXAmount * 1000;
         } else {
-            mintAmount = apeXAmount * totalSupply / apeXBalance;
+            mintAmount = apeXAmount * 1000 * totalSupply / apeXBalance;
         }
 
         TransferHelper.safeTransferFrom(apeXToken, msg.sender, address(this), apeXAmount);
@@ -73,11 +73,11 @@ contract Banana is IERC20, Ownable {
     }
 
     function redeem(uint256 amount) external returns (uint256) {
-        require(redeemTime >= block.timestamp, "unredeemable");
+        require(block.timestamp >= redeemTime, "unredeemable");
         require(balanceOf[msg.sender] >= amount, "not enough balance");
 
         uint256 totalApeX = IERC20(apeXToken).balanceOf(address(this));
-        uint256 apeXAmount = amount * totalApeX / totalSupply;
+        uint256 apeXAmount = amount * totalApeX / totalSupply / 1000;
 
         _burn(msg.sender, amount);
         TransferHelper.safeTransfer(apeXToken, msg.sender, apeXAmount);
