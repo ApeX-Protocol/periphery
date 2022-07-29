@@ -213,7 +213,7 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
         }
 
         User memory user = users[_staker];
-        pending = (user.totalWeight * (yieldRewardsPerWeight - user.lastYieldRewardsPerWeight)) / REWARD_PER_WEIGHT_MULTIPLIER;
+        pending = (user.totalWeight * (newYieldRewardsPerWeight - user.lastYieldRewardsPerWeight)) / REWARD_PER_WEIGHT_MULTIPLIER;
     }
 
     function getStakeInfo(address _user)
