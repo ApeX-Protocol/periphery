@@ -207,7 +207,7 @@ contract StakingPool is IStakingPool, Reentrant, Initializable {
     function pendingYieldRewards(address _staker) external view returns (uint256 pending) {
         uint256 newYieldRewardsPerWeight = yieldRewardsPerWeight;
 
-        if (usersLockingWeight != 0) {
+        if (usersLockingWeight != 0 && beyongEndTime == false) {
             (uint256 apeXReward,) = factory.calStakingPoolApeXReward(poolToken);
             newYieldRewardsPerWeight += (apeXReward * REWARD_PER_WEIGHT_MULTIPLIER) / usersLockingWeight;
         }
