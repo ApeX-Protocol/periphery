@@ -121,22 +121,22 @@ async function main() {
 let pair = await ethers.getContractAt('IPair', pairAddr);
 
 /////////////////first part: for cancel order //////////////////
-console.log('term swap');
-termSwapAmount = ethers.utils.parseUnits("2");
-let tx = await token0.approve(pairAddr, termSwapAmount);
-await tx.wait();
-console.log("------------")
-let temp = await token0.allowance(account.getAddress(), pairAddr);
-console.log("approve: ", temp.toString());
-await twammTermSwap.longTermSwapTokenToToken(
-    token0.address,
-    token1.address,
-    termSwapAmount,
-    numIntervalUnits,
-    timeStamp + 900
-);
+// console.log('term swap');
+// termSwapAmount = ethers.utils.parseUnits("2");
+// let tx = await token0.approve(pairAddr, termSwapAmount);
+// await tx.wait();
+// console.log("------------")
+// let temp = await token0.allowance(account.getAddress(), pairAddr);
+// console.log("approve: ", temp.toString());
+// await twammTermSwap.longTermSwapTokenToToken(
+//     token0.address,
+//     token1.address,
+//     termSwapAmount,
+//     numIntervalUnits,
+//     timeStamp + 900
+// );
 
-await sleep(10000);
+// await sleep(10000);
 
 // console.log('get order Ids');
 // let orderIds = await pair.userIdsCheck(account.getAddress());
@@ -154,16 +154,19 @@ await sleep(10000);
 //           );
 
 /////////////////second part: for order withdrawal//////////////////
-// console.log('term swap');
-// await token0.approve(pairAddr, termSwapAmount);
-// await twammTermSwap.longTermSwapTokenToToken(
-//               token0.address,
-//               token1.address,
-//               termSwapAmount,
-//               numIntervalUnits,
-//               timeStamp + 300
-//           );
-// await sleep(10000);        
+console.log('term swap');
+let tx = await token0.approve(pairAddr, termSwapAmount);
+await tx.wait();
+tx = await twammTermSwap.longTermSwapTokenToToken(
+              token0.address,
+              token1.address,
+              termSwapAmount,
+              numIntervalUnits,
+              timeStamp + 300
+          );
+await tx.wait();
+
+await sleep(10000);        
 orderIds = await pair.userIdsCheck(account.getAddress());
 console.log('withdraw order');
 tx1 = await twammTermSwap.withdrawProceedsFromTermSwapTokenToToken(

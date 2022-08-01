@@ -78,36 +78,6 @@ await twammTermSwap.longTermSwapTokenToToken(
     timeStamp + 900
 );
 
-await sleep(10000);
-console.log("------------ term swqp 1, 100个区块完成, 10秒后  ")
- let [reserve2,reserve3 ] =  await twamm.obtainReserves(token0.address, token1.address);
-  let amount0 =   await  pair.reserveMap(token0.address);
-  let amount1 =   await  pair.reserveMap(token1.address);
-  
-console.log("reserve0: ",reserve2.div("1000000000000000"));
-console.log("reserve1: ",reserve3.div("1000000000000000"));
-console.log("amount0: ",amount0.div("1000000000000000"));
-console.log("amount1: ",amount1.div("1000000000000000"));
-await sleep(60000);
-console.log("------------ term swqp 1token, 100个区块完成, 60秒后  ")
-let [reserve4,reserve5 ] =  await twamm.obtainReserves(token0.address, token1.address);
-
- amount0 =   await  pair.reserveMap(token0.address);
- amount1 =   await  pair.reserveMap(token1.address);
-
-   console.log("reserve0: ",reserve4.div("1000000000000000"));
-   console.log("reserve1: ",reserve5.div("1000000000000000"));
-   console.log("amount0: ",amount0.div("1000000000000000"));
-   console.log("amount1: ",amount1.div("1000000000000000"));
-
-// console.log('get order Ids');
-// let orderIds = await pair.userIdsCheck(account.getAddress());
-// let s = Object.values(Object.keys(orderIds))[Object.keys(orderIds).length-1] ;
-// console.log("s: ", s); 
-// console.log('cancel order ', orderIds);
-// currentBlockNumber = await ethers.provider.getBlockNumber();
-// timeStamp = (await ethers.provider.getBlock(currentBlockNumber)).timestamp;
-
 
 }
 
