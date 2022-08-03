@@ -27,16 +27,16 @@ async function main() {
   const token1 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token1Addr);
 
   // loading necessary contracts
-  const TWAMMAddr = "0xF0540ce86DEDB6F3AbCE4df492A58fF86300Fa66";
+  const TWAMMAddr = "0x4b5CB9001387275a855324F999596d7470d9f147";
   const twamm = await ethers.getContractAt("ITWAMM", TWAMMAddr);
 
-  const TWAMMLiquidityAddr = "0x052778F79314CB162B7B2A2aeb3b3Aa13e988F65";
+  const TWAMMLiquidityAddr = "0x9dE990a58ffAECefbbD73da71d7338383B44A30D";
   const twammLiquidity = await ethers.getContractAt("ITWAMMLiquidity", TWAMMLiquidityAddr);
 
-  const TWAMMInstantSwapAddr = "0x3FF8EE45411662a98D85B80B8a82aE74A48F3bB9";
+  const TWAMMInstantSwapAddr = "0x3FF8EE4540x7207BaE3d25575EAF97acC51e0D8E25093041B2211662a98D85B80B8a82aE74A48F3bB9";
   const twammInstantSwap = await ethers.getContractAt("ITWAMMInstantSwap", TWAMMInstantSwapAddr);
 
-  const TWAMMTermSwapAddr = "0x7e861420512275Fcc1Fd46C352338924041f4D74";
+  const TWAMMTermSwapAddr = "0xaB187a6f689995Cd3dC419659C482D148c450567";
   const twammTermSwap = await ethers.getContractAt("ITWAMMTermSwap", TWAMMTermSwapAddr);
 
   const sleep = ms => new Promise(res => setTimeout(res, ms));
