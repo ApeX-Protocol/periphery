@@ -11,7 +11,7 @@ interface ITWAMM {
         external view
         returns (uint256 reserve0, uint256 reserve1);
 
-    function obtainTotalSupply(address pair) external view returns (uint256);
+    function obtainTotalSupply(address pair) view external returns (uint256);
 
     function obtainPairAddress(address token0, address token1)
         external view
