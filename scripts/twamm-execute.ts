@@ -70,7 +70,7 @@ function computeVirtualBalances(
     //constant product formula
     tokenBOut = tokenBStart.mul(tokenAIn).div(tokenAStart.add(tokenAIn));
     ammEndTokenA = tokenAStart.add(tokenAIn);
-    ammEndTokenB = tokenBStart.add(tokenBOut);
+    ammEndTokenB = tokenBStart.sub(tokenBOut);
   }
   //when both pools sell, we use the TWAMM formula
   else {
