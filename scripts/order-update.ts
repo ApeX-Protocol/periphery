@@ -3,13 +3,14 @@ import executeVirtualOrders from "./twamm-execute";
 const hre = require("hardhat");
 const ethers = hre.ethers;
 
+// query order 
 async function main() {
   const [account] = await ethers.getSigners();
   console.log("Account Address:", await account.getAddress());
   console.log("Account balance:", (await account.getBalance()).toString());
 
-  const token0Addr = "0xb0751fACbCcF598787c351Ce9541a4b203504c41";
-  const token1Addr = "0x419E14a156daA5159ad73D36313E3520ff2a3F57";
+  const token0Addr = "0x39C6E50227cBd9Bc80b18f1F918d73C91B44293c";
+  const token1Addr = "0xAed97054763C0785F73408E0b642F28E2DeD836a";
 
   const tokenAAddr = token0Addr < token1Addr ? token0Addr : token1Addr;
 
@@ -18,7 +19,7 @@ async function main() {
   const twamm = await ethers.getContractAt("ITWAMM", TWAMMAddr);
 
   const pairAddr = await twamm.obtainPairAddress(token0Addr, token1Addr);
-  let pair = await ethers.getContractAt("Pair", pairAddr);
+  let pair = await ethers.getContractAt("IPair", pairAddr);
 
   let currentBlockNumber = await ethers.provider.getBlockNumber();
   console.log("current block number", currentBlockNumber);
