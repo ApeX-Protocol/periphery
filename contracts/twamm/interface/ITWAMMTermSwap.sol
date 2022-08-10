@@ -9,21 +9,21 @@ interface ITWAMMTermSwap {
         uint256 amountIn,
         uint256 numberOfBlockIntervals,
         uint256 deadline
-    ) external;
+    ) external returns (uint256 orderId);
 
     function longTermSwapTokenToETH(
         address token,
         uint256 amountTokenIn,
         uint256 numberOfBlockIntervals,
         uint256 deadline
-    ) external;
+    ) external returns (uint256 orderId);
 
     function longTermSwapETHToToken(
         address token,
         uint256 amountETHIn,
         uint256 numberOfBlockIntervals,
         uint256 deadline
-    ) external payable;
+    ) external payable returns (uint256 orderId);
 
     function cancelTermSwapTokenToToken(
         address token0,

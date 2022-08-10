@@ -2,12 +2,25 @@
 
 pragma solidity ^0.8.0;
 
+
+
 interface IPair {
+
+    struct Order {
+    uint256 id;
+    uint256 expirationBlock;
+    uint256 saleRate;
+    address owner;
+    address sellTokenId;
+    address buyTokenId;
+    }
     function factory() external view returns (address);
 
     function tokenA() external view returns (address);
 
     function tokenB() external view returns (address);
+
+    function kLast() external view returns (uint256);
 
     function LP_FEE() external pure returns (uint256);
 
@@ -23,7 +36,7 @@ interface IPair {
 
     function getTotalSupply() external view returns (uint256);
 
-    function resetMapWETH(address to) external;
+    function resetMapWETH(address) external;
 
     event InitialLiquidityProvided(
         address indexed addr,
@@ -82,7 +95,7 @@ interface IPair {
         address sender,
         uint256 amountAIn,
         uint256 numberOfBlockIntervals
-    ) external;
+    ) external returns (uint256 orderId);
 
     function instantSwapFromBToA(
         address sender,
@@ -94,7 +107,7 @@ interface IPair {
         address sender,
         uint256 amountBIn,
         uint256 numberOfBlockIntervals
-    ) external;
+    ) external returns (uint256 orderId);
 
     function cancelLongTermSwap(
         address sender,
@@ -108,15 +121,34 @@ interface IPair {
         bool proceedETH
     ) external;
 
-    function getOrderProceeds(uint256 orderId)
+    function getOrderDetails(uint256 orderId)
         external
         view
-        returns (uint256 withdrawableProceeds);
+        returns (Order memory);
 
-    function getTWAMMCurrentSalesRate()
+    function getOrderRewardFactorAtSubmission(uint256 orderId)
         external
         view
-        returns (uint256 tokenASalesRate, uint256 tokenBSalesRate);
+        returns (uint256 orderRewardFactorAtSubmission);
+
+    function getTWAMMState()
+        external
+        view
+        returns (
+            uint256 lastVirtualOrderBlock,
+            uint256 tokenASalesRate,
+            uint256 tokenBSalesRate,
+            uint256 orderPoolARewardFactor,
+            uint256 orderPoolBRewardFactor
+        );
+
+    function getTWAMMSalesRateEnding(uint256 blockNumber)
+        external
+        view
+        returns (
+            uint256 orderPoolASalesRateEnding,
+            uint256 orderPoolBSalesRateEnding
+        );
 
     function userIdsCheck(address userAddress)
         external
