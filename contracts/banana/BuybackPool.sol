@@ -78,7 +78,7 @@ contract BuybackPool is Ownable, AnalyticMath {
             lastExecuteBlock = lastExecuteBlock + intervalBlocks;
         }
 
-        require(block.number >= lastExecuteBlock, "not reach execute block");
+        require(block.number > lastExecuteBlock, "not reach execute block");
         
         ITWAMMTermSwap swap = ITWAMMTermSwap(twammTermSwap);
         if (lastOrderId > 0) {
