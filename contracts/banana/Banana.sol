@@ -138,6 +138,7 @@ contract Banana is IBanana, Ownable {
         address to,
         uint256 value
     ) private {
+        require(to != address(0), "can not tranfer to zero address");
         uint256 fromBalance = balanceOf[from];
         require(fromBalance >= value, "transfer amount exceeds balance");
         balanceOf[from] = fromBalance - value;
