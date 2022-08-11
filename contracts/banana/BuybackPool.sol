@@ -83,6 +83,8 @@ contract BuybackPool is Ownable, AnalyticMath {
         ITWAMMTermSwap swap = ITWAMMTermSwap(twammTermSwap);
         if (lastOrderId > 0) {
             swap.withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
+            uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
+            IBanana(banana).burn(address(this), bananaBalance);
         }
         
         if (priceT1 > 0 && priceT2 > 0 && rewardT1 > 0 && rewardT2 > 0) {

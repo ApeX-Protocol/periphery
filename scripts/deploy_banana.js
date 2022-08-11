@@ -26,9 +26,9 @@ let buybackPool;
 const main = async () => {
   [owner] = await ethers.getSigners();
   await createOrAttachMockToken();
-  await createBanana();
-  await createClaimable();
-  await createDistributor();
+  // await createBanana();
+  // await createClaimable();
+  // await createDistributor();
   await createBuybackPool();
 };
 
@@ -40,7 +40,7 @@ async function createOrAttachMockToken() {
     console.log("APEX:", apeX.address);
     console.log(verifyStr, process.env.HARDHAT_NETWORK, apeX.address, "MockApeX", "APEX");
   } else {
-    apeX = await MockToken.attach(apeXAddress);
+    apeX = MockToken.attach(apeXAddress);
   }
 
   if (usdcAddress == "") {
@@ -49,7 +49,7 @@ async function createOrAttachMockToken() {
     console.log("USDC:", usdc.address);
     console.log(verifyStr, process.env.HARDHAT_NETWORK, usdc.address, "MockUSDC", "USDC");
   } else {
-    usdc = await MockToken.attach(usdcAddress);
+    usdc = MockToken.attach(usdcAddress);
   }
 }
 
@@ -94,6 +94,15 @@ async function createDistributor() {
 }
 
 async function createBuybackPool() {
+  if (banana == null) {
+    const Banana = await ethers.getContractFactory("Banana");
+    banana = Banana.attach("0xAed97054763C0785F73408E0b642F28E2DeD836a");
+  }
+  if (distributor == null) {
+    const BananaDistributor = await ethers.getContractFactory("BananaDistributor");
+    distributor = BananaDistributor.attach("0x00193cB4fF12e62a9eF6dd0310BB3E1885dEE290");
+  }
+
   const BuybackPool = await ethers.getContractFactory("BuybackPool");
   buybackPool = await BuybackPool.deploy(
     banana.address,
