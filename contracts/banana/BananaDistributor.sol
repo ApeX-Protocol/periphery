@@ -11,7 +11,7 @@ contract BananaDistributor is Ownable, AnalyticMath {
     using FullMath for uint256;
 
     event SetEmergency(bool emergency);
-    event Distribute(address indexed recipient, uint256 reward);
+    event Distribute(address indexed recipient, uint256 reward, uint256 fees);
 
     address public banana; // $BANA token address
     address public keeper;
@@ -98,7 +98,7 @@ contract BananaDistributor is Ownable, AnalyticMath {
         accumReward = accumReward + newReward;
         distributeTime = distributeTime + duration;
 
-        emit Distribute(rewardRecipient, newReward);
+        emit Distribute(rewardRecipient, newReward, fees);
         return newReward;
     }
 }
