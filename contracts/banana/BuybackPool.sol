@@ -9,6 +9,7 @@ import "./interfaces/ITWAMMTermSwap.sol";
 import "../utils/Ownable.sol";
 import "../utils/AnalyticMath.sol";
 import "../libraries/FullMath.sol";
+import "../libraries/TransferHelper.sol";
 
 contract BuybackPool is Ownable, AnalyticMath {
     using FullMath for uint256;
@@ -68,6 +69,18 @@ contract BuybackPool is Ownable, AnalyticMath {
 
     function updateStatus(bool isStop_) external onlyOwner {
         isStop = isStop_;
+    }
+
+    function withdraw(address to) external onlyOwner {
+        require(isStop, "not stop");
+        require(block.number > lastExecuteBlock + intervalBlocks, "not reach withdrawable block");
+        
+        ITWAMMTermSwap(twammTermSwap).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
+        uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
+        IBanana(banana).burn(address(this), bananaBalance);
+
+        uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
+        TransferHelper.safeTransfer(usdc, to, usdcBalance);
     }
 
     function execute() external {
