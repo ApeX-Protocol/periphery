@@ -4,6 +4,7 @@ import executeVirtualOrders from "./twamm-execute";
 const hre = require("hardhat");
 const ethers = hre.ethers;
 
+//query current price
 async function main() {
   const [account] = await ethers.getSigners();
   console.log("Account Address:", await account.getAddress());
@@ -33,7 +34,7 @@ async function main() {
 
   console.log("reserveA", reserveA);
   console.log("reserveB", reserveB);
-  console.log("price:", reserveB.mul(1000).div(reserveA))
+  console.log("price:", reserveB.mul(10000).div(reserveA))
   console.log("lastVirtualOrderBlock", lastVirtualOrderBlock);
   console.log("currentSalesRateA", currentSalesRateA);
   console.log("currentSalesRateB", currentSalesRateB);
@@ -48,11 +49,11 @@ async function main() {
     currentSalesRateB,
     rewardFactorA,
     rewardFactorB,
-  ] = await executeVirtualOrders(currentBlockNumber+10);
+  ] = await executeVirtualOrders(currentBlockNumber+100);
   console.log('future check')
   console.log("reserveA", reserveA);
   console.log("reserveB", reserveB);
-  console.log("price:", reserveB.mul(1000).div(reserveA))
+  console.log("price:", reserveB.mul(10000).div(reserveA))
   console.log("lastVirtualOrderBlock", lastVirtualOrderBlock);
   console.log("currentSalesRateA", currentSalesRateA);
   console.log("currentSalesRateB", currentSalesRateB);

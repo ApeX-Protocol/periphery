@@ -19,11 +19,11 @@ async function main() {
   const initialLPSupply = ethers.utils.parseUnits("10");
   const continualLPSupply = ethers.utils.parseUnits("1");
   const instantSwapAmount = ethers.utils.parseUnits("1");
-  let termSwapAmount = ethers.utils.parseUnits("1");
+  let termSwapAmount = ethers.utils.parseUnits("10");
   const numIntervalUnits = 100;
-  const token0Addr = "0x6DDFEb84c9e9E9681f2B9AbbD0726d834f0305c6";
+  const token0Addr = "0x39C6E50227cBd9Bc80b18f1F918d73C91B44293c";
   const token0 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token0Addr);
-  const token1Addr = "0x39659143A719A1D2bCd57E76e58c901f72E5f20B";
+  const token1Addr = "0xAed97054763C0785F73408E0b642F28E2DeD836a";
   const token1 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token1Addr);
 
   // loading necessary contracts

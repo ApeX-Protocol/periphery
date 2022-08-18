@@ -99,8 +99,8 @@ async function executeVirtualOrders(
 > {
   // const token0Addr = "0xb0751fACbCcF598787c351Ce9541a4b203504c41";
   // const token1Addr = "0x419E14a156daA5159ad73D36313E3520ff2a3F57";
-    const token0Addr = "0x6DDFEb84c9e9E9681f2B9AbbD0726d834f0305c6";
-   const token1Addr = "0x39659143A719A1D2bCd57E76e58c901f72E5f20B";
+    const token0Addr = "0x39C6E50227cBd9Bc80b18f1F918d73C91B44293c";
+   const token1Addr = "0xAed97054763C0785F73408E0b642F28E2DeD836a";
   
   // // loading necessary contracts
   const TWAMMAddr = "0xFe2E5fCe86495560574270f1F97a5ce9f534Cf94";
