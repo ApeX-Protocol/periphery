@@ -8,6 +8,7 @@ const keeper = "0x1956b2c4C511FDDd9443f50b36C4597D10cD9985";
 const twamm = "0xFe2E5fCe86495560574270f1F97a5ce9f534Cf94";
 const twammTermSwap = "0x6c859b445695E216e348A75287B453A2329F391F";
 const initBuyingRate = BigNumber.from("1000000000000000");
+const startTime = Math.floor(new Date() / 1000) + 60;
 
 const redeemTime = Math.floor(new Date() / 1000) + 60;
 const duration = 24 * 60 * 60;
@@ -110,7 +111,8 @@ async function createBuybackPool() {
     twamm,
     twammTermSwap,
     distributor.address,
-    initBuyingRate
+    initBuyingRate,
+    startTime
   );
   console.log("BuybackPool:", buybackPool.address);
   console.log(
@@ -122,7 +124,8 @@ async function createBuybackPool() {
     twamm,
     twammTermSwap,
     distributor.address,
-    initBuyingRate.toString()
+    initBuyingRate.toString(),
+    startTime
   );
 }
 
