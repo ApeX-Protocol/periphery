@@ -15,7 +15,7 @@ async function main() {
   const tokenAAddr = token0Addr < token1Addr ? token0Addr : token1Addr;
 
   // loading necessary contracts
-  const TWAMMAddr = "0xFe2E5fCe86495560574270f1F97a5ce9f534Cf94";
+  const TWAMMAddr = "0x4cd67eCeA6de68206C2E7c4716EdD2a25d2d4e84";
   const twamm = await ethers.getContractAt("ITWAMM", TWAMMAddr);
 
   const pairAddr = await twamm.obtainPairAddress(token0Addr, token1Addr);

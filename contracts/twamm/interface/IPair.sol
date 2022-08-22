@@ -14,6 +14,8 @@ interface IPair {
     address sellTokenId;
     address buyTokenId;
     }
+    // SPDX-License-Identifier: GPL-3.0-or-later
+
     function factory() external view returns (address);
 
     function tokenA() external view returns (address);
@@ -28,23 +30,30 @@ interface IPair {
 
     function reserveMap(address) external view returns (uint256);
 
-    function tmpMapWETH(address) external view returns (uint256);
-
     function tokenAReserves() external view returns (uint256);
 
     function tokenBReserves() external view returns (uint256);
 
     function getTotalSupply() external view returns (uint256);
 
-    function resetMapWETH(address) external;
-
     event InitialLiquidityProvided(
         address indexed addr,
+        uint256 lpTokenAmount,
         uint256 amountA,
         uint256 amountB
     );
-    event LiquidityProvided(address indexed addr, uint256 lpTokenAmount);
-    event LiquidityRemoved(address indexed addr, uint256 lpTokenAmount);
+    event LiquidityProvided(
+        address indexed addr,
+        uint256 lpTokenAmount,
+        uint256 amountAIn,
+        uint256 amountBIn
+    );
+    event LiquidityRemoved(
+        address indexed addr,
+        uint256 lpTokenAmount,
+        uint256 amountAOut,
+        uint256 amountBOut
+    );
     event InstantSwapAToB(
         address indexed addr,
         uint256 amountAIn,
@@ -65,31 +74,35 @@ interface IPair {
         uint256 amountBIn,
         uint256 orderId
     );
-    event CancelLongTermOrder(address indexed addr, uint256 orderId);
+    event CancelLongTermOrder(
+        address indexed addr,
+        uint256 orderId,
+        uint256 unsoldAmount,
+        uint256 purchasedAmount
+    );
     event WithdrawProceedsFromLongTermOrder(
         address indexed addr,
-        uint256 orderId
+        uint256 orderId,
+        uint256 proceeds
     );
 
     function provideInitialLiquidity(
         address to,
         uint256 amountA,
         uint256 amountB
-    ) external;
+    ) external returns (uint256 lpTokenAmount);
 
-    function provideLiquidity(address to, uint256 lpTokenAmount) external;
+    function provideLiquidity(address to, uint256 lpTokenAmount)
+        external
+        returns (uint256 amountAIn, uint256 amountBIn);
 
-    function removeLiquidity(
-        address to,
-        uint256 lpTokenAmount,
-        bool proceedETH
-    ) external;
+    function removeLiquidity(address to, uint256 lpTokenAmount)
+        external
+        returns (uint256 amountAOut, uint256 amountBOut);
 
-    function instantSwapFromAToB(
-        address sender,
-        uint256 amountAIn,
-        bool proceedETH
-    ) external;
+    function instantSwapFromAToB(address sender, uint256 amountAIn)
+        external
+        returns (uint256 amountBOut);
 
     function longTermSwapFromAToB(
         address sender,
@@ -97,11 +110,9 @@ interface IPair {
         uint256 numberOfBlockIntervals
     ) external returns (uint256 orderId);
 
-    function instantSwapFromBToA(
-        address sender,
-        uint256 amountBIn,
-        bool proceedETH
-    ) external;
+    function instantSwapFromBToA(address sender, uint256 amountBIn)
+        external
+        returns (uint256 amountAOut);
 
     function longTermSwapFromBToA(
         address sender,
@@ -109,17 +120,13 @@ interface IPair {
         uint256 numberOfBlockIntervals
     ) external returns (uint256 orderId);
 
-    function cancelLongTermSwap(
-        address sender,
-        uint256 orderId,
-        bool proceedETH
-    ) external;
+    function cancelLongTermSwap(address sender, uint256 orderId)
+        external
+        returns (uint256 unsoldAmount, uint256 purchasedAmount);
 
-    function withdrawProceedsFromLongTermSwap(
-        address sender,
-        uint256 orderId,
-        bool proceedETH
-    ) external;
+    function withdrawProceedsFromLongTermSwap(address sender, uint256 orderId)
+        external
+        returns (uint256 proceeds);
 
     function getOrderDetails(uint256 orderId)
         external
