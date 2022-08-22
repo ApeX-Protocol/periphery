@@ -5,7 +5,7 @@ import "../interfaces/IERC20.sol";
 import "./interfaces/IBanana.sol";
 import "./interfaces/IBananaDistributor.sol";
 import "./interfaces/ITWAMM.sol";
-import "./interfaces/ITWAMMTermSwap.sol";
+import "./interfaces/ITWAMMPair.sol";
 import "../utils/Ownable.sol";
 import "../utils/AnalyticMath.sol";
 import "../libraries/FullMath.sol";
@@ -17,7 +17,6 @@ contract BuybackPool is Ownable, AnalyticMath {
     address public banana;
     address public usdc;
     address public twamm;
-    address public twammTermSwap;
     address public bananaDistributor;
 
     uint256 public lastBuyingRate;
@@ -28,9 +27,9 @@ contract BuybackPool is Ownable, AnalyticMath {
     uint256 public priceIndex = 100;
     uint256 public rewardIndex = 50;
     uint256 public secondsPerBlock = 12;
-    uint256 public intervalBlocks = 50400; // total blocks in one week, 7*24*3600/12
+    uint256 public secondsOfEpoch = 604800; // seconds of one week, minus  7*24*3600=604800
     uint256 public lastOrderId;
-    uint256 public lastExecuteBlock;
+    uint256 public lastExecuteTime;
     
     bool public isStop;
 
@@ -38,17 +37,17 @@ contract BuybackPool is Ownable, AnalyticMath {
         address banana_, 
         address usdc_,
         address twamm_,
-        address twammTermSwap_,
         address bananaDistributor_,
-        uint256 initBuyingRate
+        uint256 initBuyingRate,
+        uint256 startTime
     ) {
         owner = msg.sender;
         banana = banana_;
         usdc = usdc_;
         twamm = twamm_;
-        twammTermSwap = twammTermSwap_;
         bananaDistributor = bananaDistributor_;
         lastBuyingRate = initBuyingRate;
+        lastExecuteTime = startTime;
     }
 
     function updatePriceIndex(uint256 newPriceIndex) external onlyOwner {
@@ -63,8 +62,8 @@ contract BuybackPool is Ownable, AnalyticMath {
         secondsPerBlock = newSecondsPerBlock;
     }
 
-    function updateIntervalBlocks(uint256 newIntervalBlocks) external onlyOwner {
-        intervalBlocks = newIntervalBlocks;
+    function updateSecondsOfEpoch(uint256 newSecondsOfEpoch) external onlyOwner {
+        secondsOfEpoch = newSecondsOfEpoch;
     }
 
     function updateStatus(bool isStop_) external onlyOwner {
@@ -73,9 +72,10 @@ contract BuybackPool is Ownable, AnalyticMath {
 
     function withdraw(address to) external onlyOwner {
         require(isStop, "not stop");
-        require(block.number > lastExecuteBlock + intervalBlocks, "not reach withdrawable block");
-        
-        ITWAMMTermSwap(twammTermSwap).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
+        address pair = ITWAMM(twamm).obtainPairAddress(usdc, banana);
+        ITWAMMPair.Order memory order = ITWAMMPair(pair).getOrderDetails(lastOrderId);
+        require(block.number > order.expirationBlock, "not reach withdrawable block");
+        ITWAMM(twamm).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
         uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
         IBanana(banana).burn(address(this), bananaBalance);
 
@@ -85,19 +85,17 @@ contract BuybackPool is Ownable, AnalyticMath {
 
     function execute() external {
         require(!isStop, "is stop");
-        if (lastExecuteBlock == 0) {
-            lastExecuteBlock = block.number;
-        } else {
-            lastExecuteBlock = lastExecuteBlock + intervalBlocks;
-        }
-
-        require(block.number > lastExecuteBlock, "not reach execute block");
+        lastExecuteTime = lastExecuteTime + secondsOfEpoch;
+        require(block.timestamp >= lastExecuteTime, "not reach execute time");
         
-        ITWAMMTermSwap swap = ITWAMMTermSwap(twammTermSwap);
         if (lastOrderId > 0) {
-            swap.withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
+            address pair = ITWAMM(twamm).obtainPairAddress(usdc, banana);
+            ITWAMMPair.Order memory order = ITWAMMPair(pair).getOrderDetails(lastOrderId);
+            require(block.number > order.expirationBlock, "not reach withdrawable block");
+
+            ITWAMM(twamm).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
             uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
-            IBanana(banana).burn(address(this), bananaBalance);
+            IBanana(banana).burn(address(this), bananaAmount);
         }
         
         if (priceT1 > 0 && priceT2 > 0 && rewardT1 > 0 && rewardT2 > 0) {
@@ -106,14 +104,16 @@ contract BuybackPool is Ownable, AnalyticMath {
             lastBuyingRate = lastBuyingRate.mulDiv(pn, pd).mulDiv(rn, rd);
         } 
         
+        require(lastExecuteTime + secondsOfEpoch > block.timestamp, "over next opech time");
+        uint256 intervalBlocks = (lastExecuteTime + secondsOfEpoch - block.timestamp) / secondsPerBlock;
         uint256 amountIn = intervalBlocks * lastBuyingRate * secondsPerBlock;
         uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
         if (amountIn > usdcBalance) {
             amountIn = usdcBalance;
         }
         require(amountIn > 0, "buying amount is 0");
-        IERC20(usdc).approve(address(swap), amountIn);
-        lastOrderId = swap.longTermSwapTokenToToken(usdc, banana, amountIn, intervalBlocks, block.timestamp);
+        IERC20(usdc).approve(twamm, amountIn);
+        lastOrderId = ITWAMM(twamm).longTermSwapTokenToToken(usdc, banana, amountIn, intervalBlocks / 5, block.timestamp);
         
         uint256 lastReward = IBananaDistributor(bananaDistributor).lastReward();
         rewardT2 = rewardT1;
