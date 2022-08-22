@@ -5,6 +5,12 @@ const ethers = hre.ethers;
 
 const bigZero = BigNumber.from(0);
 
+const token0Addr = "0x39C6E50227cBd9Bc80b18f1F918d73C91B44293c";
+const token1Addr = "0xAed97054763C0785F73408E0b642F28E2DeD836a";
+// // loading necessary contracts
+const TWAMMAddr = "0xFe2E5fCe86495560574270f1F97a5ce9f534Cf94";
+
+
 function sqrt(value: BigNumber): BigNumber {
   return BigNumber.from(
     new bn(value.toString()).sqrt().toFixed().split(".")[0]
@@ -99,11 +105,7 @@ async function executeVirtualOrders(
 > {
   // const token0Addr = "0xb0751fACbCcF598787c351Ce9541a4b203504c41";
   // const token1Addr = "0x419E14a156daA5159ad73D36313E3520ff2a3F57";
-    const token0Addr = "0x39C6E50227cBd9Bc80b18f1F918d73C91B44293c";
-   const token1Addr = "0xAed97054763C0785F73408E0b642F28E2DeD836a";
-  
-  // // loading necessary contracts
-  const TWAMMAddr = "0xFe2E5fCe86495560574270f1F97a5ce9f534Cf94";
+
   const twamm = await ethers.getContractAt("ITWAMM", TWAMMAddr);
 
   const pairAddr = await twamm.obtainPairAddress(token0Addr, token1Addr);
@@ -201,7 +203,7 @@ async function executeVirtualOrders(
           reserveB,
           tokenASellAmount,
           tokenBSellAmount
-        );
+        );  
 
       if (!currentSalesRateA.eq(0)) {
         rewardFactorA = rewardFactorA.add(tokenBOut.div(currentSalesRateA));

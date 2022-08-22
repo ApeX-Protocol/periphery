@@ -29,18 +29,10 @@ async function main() {
   const token1 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token1Addr);
 
   // loading necessary contracts
-  const TWAMMAddr = "0xFe2E5fCe86495560574270f1F97a5ce9f534Cf94";
+  const TWAMMAddr = "0x4cd67eCeA6de68206C2E7c4716EdD2a25d2d4e84";
   const twamm = await ethers.getContractAt("ITWAMM", TWAMMAddr);
 
-  const TWAMMLiquidityAddr = "0x470C1F6F472f4ec19de25A467327188b5de96308";
-  const twammLiquidity = await ethers.getContractAt("ITWAMMLiquidity", TWAMMLiquidityAddr);
-
-  const TWAMMInstantSwapAddr = "0xf382E6ff0cE929FA5F10DBBD006213e7E1D14F53";
-  const twammInstantSwap = await ethers.getContractAt("ITWAMMInstantSwap", TWAMMInstantSwapAddr);
-
-  const TWAMMTermSwapAddr = "0x6c859b445695E216e348A75287B453A2329F391F";
-  const twammTermSwap = await ethers.getContractAt("ITWAMMTermSwap", TWAMMTermSwapAddr);
-
+ 
   const sleep = ms => new Promise(res => setTimeout(res, ms));
 
   
@@ -96,7 +88,7 @@ async function main() {
     tx1 = await token1.approve(pairAddr, allowance);
     await tx1.wait();
 
-    tx1 = await twammLiquidity.addLiquidity(
+    tx1 = await twamm.addLiquidity(
         token0Addr,
         token1Addr,
         newLPTokens,
@@ -161,7 +153,7 @@ let pair = await ethers.getContractAt('IPair', pairAddr);
 console.log('term swap');
 let tx = await token0.approve(pairAddr, termSwapAmount);
 await tx.wait();
-tx = await twammTermSwap.longTermSwapTokenToToken(
+tx = await twamm.longTermSwapTokenToToken(
               token0.address,
               token1.address,
               termSwapAmount,
@@ -173,7 +165,7 @@ await tx.wait();
 await sleep(10000);        
 orderIds = await pair.userIdsCheck(account.getAddress());
 console.log('withdraw order');
-tx1 = await twammTermSwap.withdrawProceedsFromTermSwapTokenToToken(
+tx1 = await twamm.withdrawProceedsFromTermSwapTokenToToken(
     token0.address,
     token1.address,
     Object.values(Object.keys(orderIds))[Object.keys(orderIds).length-1],
