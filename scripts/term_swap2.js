@@ -27,8 +27,8 @@ async function main() {
   const token1 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token1Addr);
 
   // loading necessary contracts
-  const TWAMMAddr = "0x4cd67eCeA6de68206C2E7c4716EdD2a25d2d4e84";
-  const twamm = await ethers.getContractAt("ITWAMM", TWAMMAddr);
+  const TWAMMAddr = "0xcdda22E7286516887B170563d497b658F8CB25CF";
+  const twamm = await ethers.getContractAt("contracts/twamm/interface/ITWAMM.sol:ITWAMM", TWAMMAddr);
 
   const sleep = ms => new Promise(res => setTimeout(res, ms));
 
@@ -74,6 +74,7 @@ console.log("------------ term swqp 1, 100个区块完成, 10秒后  ")
 
   orderIds = await pair.userIdsCheck(account.getAddress());
   console.log('withdraw order');
+  console.log(orderIds);
   tx1 = await twamm.withdrawProceedsFromTermSwapTokenToToken(
     token0.address,
     token1.address,
