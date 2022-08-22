@@ -1,23 +1,21 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-import "../interfaces/IERC20.sol";
+import "./interfaces/IBanana.sol";
 import "../utils/Ownable.sol";
 import "../libraries/TransferHelper.sol";
 
-contract Banana is IERC20, Ownable {
-    event Redeem(address indexed user, uint256 burntAmount, uint256 apeXAmount);
-
+contract Banana is IBanana, Ownable {
     string public constant override name = "Banana";
     string public constant override symbol = "BANA";
     uint8 public constant override decimals = 18;
-
+    
+    address public override apeXToken;
+    uint256 public override redeemTime;
     uint256 public override totalSupply;
     mapping(address => uint256) public override balanceOf;
     mapping(address => mapping(address => uint256)) public override allowance;
 
-    address public apeXToken;
-    uint256 public redeemTime;
     mapping(address => bool) public minters;
     mapping(address => bool) public burners;
 
@@ -29,6 +27,7 @@ contract Banana is IERC20, Ownable {
 
     function updateRedeemTime(uint256 redeemTime_) external onlyOwner {
         require(redeemTime_ > block.timestamp, "need over current time");
+        emit RedeemTimeChanged(redeemTime, redeemTime_);
         redeemTime = redeemTime_;
     }
 
@@ -48,7 +47,7 @@ contract Banana is IERC20, Ownable {
         burners[burner] = false;
     }
 
-    function mint(address to, uint256 apeXAmount) external returns (uint256) {
+    function mint(address to, uint256 apeXAmount) external override returns (uint256) {
         require(minters[msg.sender], "forbidden");
         require(apeXAmount > 0, "zero amount");
 
@@ -62,17 +61,19 @@ contract Banana is IERC20, Ownable {
 
         TransferHelper.safeTransferFrom(apeXToken, msg.sender, address(this), apeXAmount);
         _mint(to, mintAmount);
+        emit Mint(to, apeXAmount, mintAmount);
         return mintAmount;
     }
 
-    function burn(address from, uint256 value) external returns (bool) {
+    function burn(address from, uint256 amount) external override returns (bool) {
         require(burners[msg.sender], "forbidden");
-        require(value <= totalSupply, "value > totalSupply");
-        _burn(from, value);
+        require(amount <= totalSupply, "amount > totalSupply");
+        _burn(from, amount);
+        emit Burn(from, amount);
         return true;
     }
 
-    function redeem(uint256 amount) external returns (uint256) {
+    function redeem(uint256 amount) external override returns (uint256) {
         require(block.timestamp >= redeemTime, "unredeemable");
         require(balanceOf[msg.sender] >= amount, "not enough balance");
 
@@ -117,6 +118,7 @@ contract Banana is IERC20, Ownable {
     }
 
     function _burn(address from, uint256 value) internal {
+        require(balanceOf[from] >= value, "balance of from < value");
         balanceOf[from] = balanceOf[from] - value;
         totalSupply = totalSupply - value;
         emit Transfer(from, address(0), value);
@@ -136,6 +138,7 @@ contract Banana is IERC20, Ownable {
         address to,
         uint256 value
     ) private {
+        require(to != address(0), "can not tranfer to zero address");
         uint256 fromBalance = balanceOf[from];
         require(fromBalance >= value, "transfer amount exceeds balance");
         balanceOf[from] = fromBalance - value;
