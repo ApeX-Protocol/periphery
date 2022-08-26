@@ -18,6 +18,7 @@ contract BuybackPool is Ownable, AnalyticMath {
     address public usdc;
     address public twamm;
     address public bananaDistributor;
+    address public keeper;
 
     uint256 public lastBuyingRate;
     uint256 public priceT1;
@@ -27,10 +28,11 @@ contract BuybackPool is Ownable, AnalyticMath {
     uint256 public priceIndex = 100;
     uint256 public rewardIndex = 50;
     uint256 public secondsPerBlock = 12;
-    uint256 public secondsOfEpoch = 604800; // seconds of one week, minus  7*24*3600=604800
+    uint256 public secondsOfEpoch;
     uint256 public lastOrderId;
     uint256 public lastExecuteTime;
     
+    bool public initialized;
     bool public isStop;
 
     constructor(
@@ -38,7 +40,10 @@ contract BuybackPool is Ownable, AnalyticMath {
         address usdc_,
         address twamm_,
         address bananaDistributor_,
-        uint256 initBuyingRate,
+        address keeper_,
+        uint256 secondsOfEpoch_,
+        uint256 initPrice,
+        uint256 initReward,
         uint256 startTime
     ) {
         owner = msg.sender;
@@ -46,8 +51,18 @@ contract BuybackPool is Ownable, AnalyticMath {
         usdc = usdc_;
         twamm = twamm_;
         bananaDistributor = bananaDistributor_;
-        lastBuyingRate = initBuyingRate;
+        keeper = keeper_;
+        secondsOfEpoch = secondsOfEpoch_;
+        priceT2 = initPrice;
+        rewardT2 = initReward;
         lastExecuteTime = startTime;
+    }
+
+    function initBuyingRate(uint256 amountIn, uint256 secondsOfBuffer) external onlyOwner {
+        require(!initialized, "already initialized");
+        initialized = true;
+        uint256 intervalBlocks = (lastExecuteTime + secondsOfEpoch - secondsOfBuffer) / secondsPerBlock;
+        lastBuyingRate = amountIn / intervalBlocks / secondsPerBlock;
     }
 
     function updatePriceIndex(uint256 newPriceIndex) external onlyOwner {
@@ -70,6 +85,10 @@ contract BuybackPool is Ownable, AnalyticMath {
         isStop = isStop_;
     }
 
+    function updateKeeper(address keeper_) external onlyOwner {
+        keeper = keeper_;
+    }
+
     function withdraw(address to) external onlyOwner {
         require(isStop, "not stop");
         address pair = ITWAMM(twamm).obtainPairAddress(usdc, banana);
@@ -84,7 +103,9 @@ contract BuybackPool is Ownable, AnalyticMath {
     }
 
     function execute() external {
+        require(initialized, "uninitialized");
         require(!isStop, "is stop");
+        require(msg.sender == keeper, "only keeper");
         lastExecuteTime = lastExecuteTime + secondsOfEpoch;
         require(block.timestamp >= lastExecuteTime, "not reach execute time");
         
@@ -110,6 +131,7 @@ contract BuybackPool is Ownable, AnalyticMath {
         uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
         if (amountIn > usdcBalance) {
             amountIn = usdcBalance;
+            lastBuyingRate = amountIn / intervalBlocks / secondsPerBlock;
         }
         require(amountIn > 0, "buying amount is 0");
         IERC20(usdc).approve(twamm, amountIn);
