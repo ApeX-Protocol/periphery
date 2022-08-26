@@ -2,18 +2,17 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
 const verifyStr = "npx hardhat verify --network";
 
-const apeXAddress = "0x8aA6B0E10BD6DBaf5159967F92f2E740afE2b4C3";
-const usdcAddress = "0x39C6E50227cBd9Bc80b18f1F918d73C91B44293c";
+const apeXAddress = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
+const usdcAddress = "0x9B8fFaE90A4eaeE8a94Aa4cfF1B522ed450a590D";
 const keeper = "0x1956b2c4C511FDDd9443f50b36C4597D10cD9985";
-const twamm = "0xFe2E5fCe86495560574270f1F97a5ce9f534Cf94";
-const twammTermSwap = "0x6c859b445695E216e348A75287B453A2329F391F";
-const initBuyingRate = BigNumber.from("1000000000000000");
-const startTime = Math.floor(new Date() / 1000) + 60;
-
-const redeemTime = Math.floor(new Date() / 1000) + 60;
+const twamm = "0xcdda22E7286516887B170563d497b658F8CB25CF";
+const initPrice = BigNumber.from("250000000000000");
+// const startTime = Math.floor(new Date() / 1000) + 60;
+const startTime = 1661558400;
+const redeemTime = 1662012000;
 const duration = 24 * 60 * 60;
-const distributeTime = Math.floor(new Date() / 1000) + 60;
-const initReward = BigNumber.from("1000000000000000000");
+const distributeTime = startTime + duration;
+const initReward = BigNumber.from("2000000000000000000000000");
 const delta = 50;
 
 let owner;
@@ -97,11 +96,11 @@ async function createDistributor() {
 async function createBuybackPool() {
   if (banana == null) {
     const Banana = await ethers.getContractFactory("Banana");
-    banana = Banana.attach("0xAed97054763C0785F73408E0b642F28E2DeD836a");
+    banana = Banana.attach("0x851C49AcABC499E406207557352e4e35C9E8cEB9");
   }
   if (distributor == null) {
     const BananaDistributor = await ethers.getContractFactory("BananaDistributor");
-    distributor = BananaDistributor.attach("0x00193cB4fF12e62a9eF6dd0310BB3E1885dEE290");
+    distributor = BananaDistributor.attach("0x535a5eCFBC832e878aD2d72bC3cCE73bC25eABCf");
   }
 
   const BuybackPool = await ethers.getContractFactory("BuybackPool");
@@ -109,9 +108,11 @@ async function createBuybackPool() {
     banana.address,
     usdc.address,
     twamm,
-    twammTermSwap,
     distributor.address,
-    initBuyingRate,
+    keeper,
+    duration,
+    initPrice,
+    initReward,
     startTime
   );
   console.log("BuybackPool:", buybackPool.address);
@@ -122,9 +123,11 @@ async function createBuybackPool() {
     banana.address,
     usdc.address,
     twamm,
-    twammTermSwap,
     distributor.address,
-    initBuyingRate.toString(),
+    keeper,
+    duration,
+    initPrice.toString(),
+    initReward.toString(),
     startTime
   );
 }
