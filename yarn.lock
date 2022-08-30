@@ -5607,10 +5607,10 @@
   dependencies:
     "chokidar" "^3.5.3"
 
-"hardhat@^2.0.0", "hardhat@^2.0.2", "hardhat@^2.0.4", "hardhat@^2.10.1", "hardhat@^2.6.8":
-  "integrity" "sha512-0FN9TyCtn7Lt25SB2ei2G7nA2rZjP+RN6MvFOm+zYwherxLZNo6RbD8nDz88eCbhRapevmXqOiL2nM8INKsjmA=="
-  "resolved" "https://registry.npmjs.org/hardhat/-/hardhat-2.10.1.tgz"
-  "version" "2.10.1"
+"hardhat@^2.0.0", "hardhat@^2.0.2", "hardhat@^2.0.4", "hardhat@^2.10.2", "hardhat@^2.6.8":
+  "integrity" "sha512-L/KvDDT/MA6332uAtYTqdcHoSABljw4pPjHQe5SHdIJ+xKfaSc6vDKw03CmrQ5Xup0gHs8XnVSBpZo1AbbIW7g=="
+  "resolved" "https://registry.npmjs.org/hardhat/-/hardhat-2.10.2.tgz"
+  "version" "2.10.2"
   dependencies:
     "@ethereumjs/block" "^3.6.2"
     "@ethereumjs/blockchain" "^5.5.2"

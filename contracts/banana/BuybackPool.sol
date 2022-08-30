@@ -96,7 +96,7 @@ contract BuybackPool is Ownable, AnalyticMath {
         require(block.number > order.expirationBlock, "not reach withdrawable block");
         ITWAMM(twamm).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
         uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
-        IBanana(banana).burn(address(this), bananaBalance);
+        IBanana(banana).burn(bananaBalance);
 
         uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
         TransferHelper.safeTransfer(usdc, to, usdcBalance);
@@ -116,7 +116,7 @@ contract BuybackPool is Ownable, AnalyticMath {
 
             ITWAMM(twamm).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
             uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
-            IBanana(banana).burn(address(this), bananaBalance);
+            IBanana(banana).burn(bananaBalance);
         }
         
         if (priceT1 > 0 && priceT2 > 0 && rewardT1 > 0 && rewardT2 > 0) {
