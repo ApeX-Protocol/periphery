@@ -3,7 +3,7 @@ const { BigNumber } = require("@ethersproject/bignumber");
 const verifyStr = "npx hardhat verify --network";
 
 const apeXAddress = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
-const usdcAddress = "0x9B8fFaE90A4eaeE8a94Aa4cfF1B522ed450a590D";
+const usdcAddress = "";
 const keeper = "0x1956b2c4C511FDDd9443f50b36C4597D10cD9985";
 const twamm = "0xcdda22E7286516887B170563d497b658F8CB25CF";
 const initPrice = BigNumber.from("250000000000000");
@@ -43,11 +43,19 @@ async function createOrAttachMockToken() {
     apeX = MockToken.attach(apeXAddress);
   }
 
+  const MyToken = await ethers.getContractFactory("MyToken");
   if (usdcAddress == "") {
-    usdc = await MockToken.deploy("MockUSDC", "USDC");
-    await usdc.mint(owner.address, BigNumber.from("10000000000000000000000000000"));
+    usdc = await MyToken.deploy("MockUSDC", "USDC", 6, BigNumber.from("10000000000000000"));
     console.log("USDC:", usdc.address);
-    console.log(verifyStr, process.env.HARDHAT_NETWORK, usdc.address, "MockUSDC", "USDC");
+    console.log(
+      verifyStr,
+      process.env.HARDHAT_NETWORK,
+      usdc.address,
+      "MockUSDC",
+      "USDC",
+      6,
+      BigNumber.from("10000000000000000").toString()
+    );
   } else {
     usdc = MockToken.attach(usdcAddress);
   }

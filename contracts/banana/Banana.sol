@@ -17,8 +17,7 @@ contract Banana is IBanana, Ownable {
     mapping(address => mapping(address => uint256)) public override allowance;
 
     mapping(address => bool) public minters;
-    mapping(address => bool) public burners;
-
+    
     constructor(address apeXToken_, uint256 redeemTime_) {
         owner = msg.sender;
         apeXToken = apeXToken_;
@@ -39,14 +38,6 @@ contract Banana is IBanana, Ownable {
         minters[minter] = false;
     }
 
-    function addBurner(address burner) external onlyOwner {
-        burners[burner] = true;
-    }
-
-    function removeBurner(address burner) external onlyOwner {
-        burners[burner] = false;
-    }
-
     function mint(address to, uint256 apeXAmount) external override returns (uint256) {
         require(minters[msg.sender], "forbidden");
         require(apeXAmount > 0, "zero amount");
@@ -61,15 +52,17 @@ contract Banana is IBanana, Ownable {
 
         TransferHelper.safeTransferFrom(apeXToken, msg.sender, address(this), apeXAmount);
         _mint(to, mintAmount);
-        emit Mint(to, apeXAmount, mintAmount);
         return mintAmount;
     }
 
-    function burn(address from, uint256 amount) external override returns (bool) {
-        require(burners[msg.sender], "forbidden");
-        require(amount <= totalSupply, "amount > totalSupply");
+    function burn(uint256 amount) external override returns (bool) {
+        _burn(msg.sender, amount);
+        return true;
+    }
+
+    function burnFrom(address from, uint256 amount) external override returns (bool) {
+        _spendAllowance(from, msg.sender, amount);
         _burn(from, amount);
-        emit Burn(from, amount);
         return true;
     }
 
@@ -97,11 +90,7 @@ contract Banana is IBanana, Ownable {
         address to,
         uint256 value
     ) external override returns (bool) {
-        uint256 currentAllowance = allowance[from][msg.sender];
-        if (currentAllowance != type(uint256).max) {
-            require(currentAllowance >= value, "transfer amount exceeds allowance");
-            allowance[from][msg.sender] = currentAllowance - value;
-        }
+        _spendAllowance(from, msg.sender, value);
         _transfer(from, to, value);
         return true;
     }
@@ -109,6 +98,18 @@ contract Banana is IBanana, Ownable {
     function approve(address spender, uint256 value) external override returns (bool) {
         _approve(msg.sender, spender, value);
         return true;
+    }
+
+    function _spendAllowance(
+        address from,
+        address spender,
+        uint256 value
+    ) internal virtual {
+        uint256 currentAllowance = allowance[from][spender];
+        if (currentAllowance != type(uint256).max) {
+            require(currentAllowance >= value, "insufficient allowance");
+            allowance[from][spender] = currentAllowance - value;
+        }
     }
 
     function _mint(address to, uint256 value) internal {
