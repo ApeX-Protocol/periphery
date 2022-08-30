@@ -47,7 +47,7 @@ contract Banana is IBanana, Ownable {
         if (totalSupply == 0) {
             mintAmount = apeXAmount * 1000;
         } else {
-            mintAmount = apeXAmount * 1000 * totalSupply / apeXBalance;
+            mintAmount = apeXAmount * totalSupply / apeXBalance;
         }
 
         TransferHelper.safeTransferFrom(apeXToken, msg.sender, address(this), apeXAmount);
