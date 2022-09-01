@@ -14,6 +14,8 @@ import "../libraries/TransferHelper.sol";
 contract BuybackPool is Ownable, AnalyticMath {
     using FullMath for uint256;
 
+    event BuybackExecuted(uint256 orderId, uint256 amountIn, uint256 buyingRate, uint256 burned);
+
     address public banana;
     address public usdc;
     address public twamm;
@@ -109,14 +111,15 @@ contract BuybackPool is Ownable, AnalyticMath {
         lastExecuteTime = lastExecuteTime + secondsOfEpoch;
         require(block.timestamp >= lastExecuteTime, "not reach execute time");
         
+        uint256 burnAmount;
         if (lastOrderId > 0) {
             address pair = ITWAMM(twamm).obtainPairAddress(usdc, banana);
             ITWAMMPair.Order memory order = ITWAMMPair(pair).getOrderDetails(lastOrderId);
             require(block.number > order.expirationBlock, "not reach withdrawable block");
 
             ITWAMM(twamm).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
-            uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
-            IBanana(banana).burn(bananaBalance);
+            burnAmount = IERC20(banana).balanceOf(address(this));
+            IBanana(banana).burn(burnAmount);
         }
         
         if (priceT1 > 0 && priceT2 > 0 && rewardT1 > 0 && rewardT2 > 0) {
@@ -145,5 +148,7 @@ contract BuybackPool is Ownable, AnalyticMath {
         uint256 currentPrice = reserve0.mulDiv(1e18, reserve1);
         priceT2 = priceT1;
         priceT1 = currentPrice;
+
+        emit BuybackExecuted(lastOrderId, amountIn, lastBuyingRate, burnAmount);
     }
 }
