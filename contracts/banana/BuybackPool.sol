@@ -60,11 +60,10 @@ contract BuybackPool is Ownable, AnalyticMath {
         lastExecuteTime = startTime;
     }
 
-    function initBuyingRate(uint256 amountIn, uint256 secondsOfBuffer) external onlyOwner {
+    function initBuyingRate(uint256 amountIn) external onlyOwner {
         require(!initialized, "already initialized");
         initialized = true;
-        uint256 intervalBlocks = (lastExecuteTime + secondsOfEpoch - secondsOfBuffer) / secondsPerBlock;
-        lastBuyingRate = amountIn / intervalBlocks / secondsPerBlock;
+        lastBuyingRate = amountIn / secondsOfEpoch;
     }
 
     function updatePriceIndex(uint256 newPriceIndex) external onlyOwner {
@@ -129,16 +128,16 @@ contract BuybackPool is Ownable, AnalyticMath {
         } 
         
         require(lastExecuteTime + secondsOfEpoch > block.timestamp, "over next opech time");
-        uint256 intervalBlocks = (lastExecuteTime + secondsOfEpoch - block.timestamp) / secondsPerBlock;
-        uint256 amountIn = intervalBlocks * lastBuyingRate * secondsPerBlock;
+        uint256 deltaTime = lastExecuteTime + secondsOfEpoch - block.timestamp;
+        uint256 amountIn = deltaTime * lastBuyingRate;
         uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
         if (amountIn > usdcBalance) {
             amountIn = usdcBalance;
-            lastBuyingRate = amountIn / intervalBlocks / secondsPerBlock;
+            lastBuyingRate = amountIn / deltaTime;
         }
         require(amountIn > 0, "buying amount is 0");
         IERC20(usdc).approve(twamm, amountIn);
-        lastOrderId = ITWAMM(twamm).longTermSwapTokenToToken(usdc, banana, amountIn, intervalBlocks / 5, block.timestamp);
+        lastOrderId = ITWAMM(twamm).longTermSwapTokenToToken(usdc, banana, amountIn, deltaTime / (secondsPerBlock * 5), block.timestamp);
         
         uint256 lastReward = IBananaDistributor(bananaDistributor).lastReward();
         rewardT2 = rewardT1;
