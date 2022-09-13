@@ -42,11 +42,12 @@
     "deploy_staking_test": "hardhat run scripts/deploy_staking.js --network arbitrumTestnet",
     "deploy_referral_test": "hardhat run scripts/deploy_referral.js --network arbitrumTestnet",
     "deploy_nft_rebate_test": "hardhat run scripts/deploy_nft_rebate.js --network arbitrumTestnet",
-    "deploy_merkle_test": "hardhat run scripts/deploy_merkle.js --network arbitrumTestnet"
+    "deploy_merkle_test": "hardhat run scripts/deploy_merkle.js --network goerli",
+    "deploy_banana_test": "hardhat run scripts/deploy_banana.js --network goerli"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "@nomiclabs/hardhat-etherscan": "^2.1.7",
+    "@nomiclabs/hardhat-etherscan": "^3.1.0",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/hardhat-upgrades": "^1.12.0",
     "@openzeppelin/test-helpers": "^0.5.15",
@@ -55,12 +56,14 @@
     "chai": "^4.3.4",
     "ethereum-waffle": "^3.4.0",
     "ethers": "^5.4.7",
-    "hardhat": "^2.8.0",
+    "hardhat": "^2.10.2",
     "hardhat-deploy": "^0.9.4",
     "hardhat-gas-reporter": "^1.0.4",
     "keccak256": "^1.0.2",
     "merkletreejs": "^0.2.13",
-    "solidity-coverage": "^0.7.17"
+    "solidity-coverage": "^0.7.17",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.7.4"
   },
   "dependencies": {
     "@apex-protocol/core": "0.0.2",

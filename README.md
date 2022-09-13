@@ -13,3 +13,11 @@ npx hardhat node
 node scripts/sample-script.js
 npx hardhat help
 ```
+
+## TWAMM 
+API interface: https://pulsarswap.feishu.cn/docx/doxcnBJQ8zEeiRDeYfPd7RYDXPb
+
+## TS install 
+```
+  npm install --save-dev ts-node typescript 
+```
