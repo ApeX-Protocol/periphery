@@ -3,14 +3,14 @@ const { BigNumber } = require("@ethersproject/bignumber");
 const verifyStr = "npx hardhat verify --network";
 
 const apeXAddress = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
-const usdcAddress = "0x4FE2E72cBf1dE304C13E5D48fe3813c98d2C30d9";
+const usdcAddress = "0xd44bb808bfe43095dbb94c83077766382d63952a";
 const bananaAddress = "0xFb2482208311fDe0b210D833C91e216ceAD0A881";
 const keeper = "0xf166a0dfBce1B0Aa674E163B05b66906Db3B530e";
 const twamm = "0xcdda22E7286516887B170563d497b658F8CB25CF";
 const initPrice = BigNumber.from("400000000000000");
 // const startTime = Math.floor(new Date() / 1000) + 60;
-const startTime = 1662422400;
-const redeemTime = 1663200000;
+const startTime = 1663027200;
+const redeemTime = 1663545600;
 const duration = 24 * 60 * 60;
 const distributeTime = startTime + duration;
 const initReward = BigNumber.from("961538461538461600000000000");
