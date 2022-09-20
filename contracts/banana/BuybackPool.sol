@@ -31,14 +31,14 @@ contract BuybackPool is Ownable, AnalyticMath {
     uint256 public rewardIndex = 50;
     uint256 public secondsPerBlock = 12;
     uint256 public secondsOfEpoch;
-    uint256 public lastOrderId;
+    uint256 public lastOrderId = type(uint256).max;
     uint256 public lastExecuteTime;
-    
+
     bool public initialized;
     bool public isStop;
 
     constructor(
-        address banana_, 
+        address banana_,
         address usdc_,
         address twamm_,
         address bananaDistributor_,
@@ -82,6 +82,10 @@ contract BuybackPool is Ownable, AnalyticMath {
         secondsOfEpoch = newSecondsOfEpoch;
     }
 
+    function updateLastExecuteTime(uint256 newExecuteTime) external onlyOwner {
+        lastExecuteTime = newExecuteTime;
+    }
+
     function updateStatus(bool isStop_) external onlyOwner {
         isStop = isStop_;
     }
@@ -90,17 +94,21 @@ contract BuybackPool is Ownable, AnalyticMath {
         keeper = keeper_;
     }
 
-    function withdraw(address to) external onlyOwner {
+    function withdrawUsdc(address to) external onlyOwner {
         require(isStop, "not stop");
-        address pair = ITWAMM(twamm).obtainPairAddress(usdc, banana);
-        ITWAMMPair.Order memory order = ITWAMMPair(pair).getOrderDetails(lastOrderId);
-        require(block.number > order.expirationBlock, "not reach withdrawable block");
-        ITWAMM(twamm).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, lastOrderId, block.timestamp);
-        uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
-        IBanana(banana).burn(bananaBalance);
-
         uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
         TransferHelper.safeTransfer(usdc, to, usdcBalance);
+    }
+
+    function withdrawAndBurn(uint256 orderId) external onlyOwner {
+        require(isStop, "not stop");
+        address pair = ITWAMM(twamm).obtainPairAddress(usdc, banana);
+        ITWAMMPair.Order memory order = ITWAMMPair(pair).getOrderDetails(orderId);
+        require(block.number > order.expirationBlock, "not reach withdrawable block");
+        ITWAMM(twamm).withdrawProceedsFromTermSwapTokenToToken(usdc, banana, orderId, block.timestamp);
+        uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
+        require(bananaBalance > 0, "nothing to burn");
+        IBanana(banana).burn(bananaBalance);
     }
 
     function execute() external {
@@ -109,9 +117,9 @@ contract BuybackPool is Ownable, AnalyticMath {
         require(msg.sender == keeper, "only keeper");
         lastExecuteTime = lastExecuteTime + secondsOfEpoch;
         require(block.timestamp >= lastExecuteTime, "not reach execute time");
-        
+
         uint256 burnAmount;
-        if (lastOrderId > 0) {
+        if (lastOrderId != type(uint256).max) {
             address pair = ITWAMM(twamm).obtainPairAddress(usdc, banana);
             ITWAMMPair.Order memory order = ITWAMMPair(pair).getOrderDetails(lastOrderId);
             require(block.number > order.expirationBlock, "not reach withdrawable block");
@@ -120,13 +128,13 @@ contract BuybackPool is Ownable, AnalyticMath {
             burnAmount = IERC20(banana).balanceOf(address(this));
             IBanana(banana).burn(burnAmount);
         }
-        
+
         if (priceT1 > 0 && priceT2 > 0 && rewardT1 > 0 && rewardT2 > 0) {
             (uint256 pn, uint256 pd) = pow(priceT2, priceT1, priceIndex, 100);
             (uint256 rn, uint256 rd) = pow(rewardT1, rewardT2, rewardIndex, 100);
             lastBuyingRate = lastBuyingRate.mulDiv(pn, pd).mulDiv(rn, rd);
-        } 
-        
+        }
+
         require(lastExecuteTime + secondsOfEpoch > block.timestamp, "over next opech time");
         uint256 deltaTime = lastExecuteTime + secondsOfEpoch - block.timestamp;
         uint256 amountIn = deltaTime * lastBuyingRate;
@@ -137,15 +145,25 @@ contract BuybackPool is Ownable, AnalyticMath {
         }
         require(amountIn > 0, "buying amount is 0");
         IERC20(usdc).approve(twamm, amountIn);
-        lastOrderId = ITWAMM(twamm).longTermSwapTokenToToken(usdc, banana, amountIn, deltaTime / (secondsPerBlock * 5), block.timestamp);
-        
+        lastOrderId = ITWAMM(twamm).longTermSwapTokenToToken(
+            usdc,
+            banana,
+            amountIn,
+            deltaTime / (secondsPerBlock * 5),
+            block.timestamp
+        );
+
         uint256 lastReward = IBananaDistributor(bananaDistributor).lastReward();
-        rewardT2 = rewardT1;
+        if (rewardT1 > 0) {
+            rewardT2 = rewardT1;
+        }
         rewardT1 = lastReward;
 
         (uint256 reserve0, uint256 reserve1) = ITWAMM(twamm).obtainReserves(usdc, banana);
-        uint256 currentPrice = reserve0.mulDiv(1e18, reserve1);
-        priceT2 = priceT1;
+        uint256 currentPrice = reserve0.mulDiv(1e30, reserve1); // reserve0/reserve1 * 10**(18+decimalsUSDC-decimalsBANA)
+        if (priceT1 > 0) {
+            priceT2 = priceT1;
+        }
         priceT1 = currentPrice;
 
         emit BuybackExecuted(lastOrderId, amountIn, lastBuyingRate, burnAmount);

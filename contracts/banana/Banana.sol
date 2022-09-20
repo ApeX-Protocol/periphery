@@ -22,6 +22,7 @@ contract Banana is IBanana, Ownable {
         owner = msg.sender;
         apeXToken = apeXToken_;
         redeemTime = redeemTime_;
+        minters[msg.sender] = true;
     }
 
     function updateRedeemTime(uint256 redeemTime_) external onlyOwner {

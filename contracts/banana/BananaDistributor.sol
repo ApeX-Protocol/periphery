@@ -68,7 +68,6 @@ contract BananaDistributor is Ownable, AnalyticMath {
     }
 
     function setDistributeTime(uint256 distributeTime_) external onlyOwner {
-        require(distributeTime >= block.timestamp, "not right time");
         distributeTime = distributeTime_;
     }
 
@@ -80,13 +79,14 @@ contract BananaDistributor is Ownable, AnalyticMath {
         require(!emergency, "EMERGENCY");
         require(msg.sender == keeper, "forbidden");
         require(block.timestamp >= distributeTime, "not right time");
-        
+        require(fees > 0, "fees are zero");
+
         uint256 newReward = lastReward;
         if (lastFees > 0) {
             (uint256 numerator, uint256 denominator) = pow(fees, lastFees, delta, 100);
             newReward = lastReward.mulDiv(numerator, denominator);
         }
-        
+
         uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
         if (newReward > bananaBalance) {
             newReward = bananaBalance;

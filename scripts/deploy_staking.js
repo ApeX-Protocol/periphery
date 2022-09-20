@@ -41,12 +41,12 @@ const main = async () => {
    * 3. 想要创建ApexPool的话，执行createApexPool()
    * 4. 想要创建StakingPool的话，createStakingPool()，需要修改lpTokenAddress
    */
-  // await createEsApeX();
+  await createEsApeX();
   // await createPoolCreatedEvent();
   // await createApexPool();
   // await createStakingPool();
   // await createReward();
-  await createAggregateQuery();
+  // await createAggregateQuery();
 };
 
 async function createEsApeX() {
