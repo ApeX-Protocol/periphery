@@ -39,7 +39,7 @@
     "deploy_merkle_arbi": "hardhat run scripts/deploy_merkle.js --network arbitrumOne",
     "deploy_l1_test": "hardhat run scripts/deploy_l1.js --network rinkeby",
     "deploy_bonding_test": "hardhat run scripts/deploy_bonding.js --network arbitrumTestnet",
-    "deploy_staking_test": "hardhat run scripts/deploy_staking.js --network arbitrumTestnet",
+    "deploy_staking_test": "hardhat run scripts/deploy_staking.js --network goerli",
     "deploy_referral_test": "hardhat run scripts/deploy_referral.js --network arbitrumTestnet",
     "deploy_nft_rebate_test": "hardhat run scripts/deploy_nft_rebate.js --network arbitrumTestnet",
     "deploy_merkle_test": "hardhat run scripts/deploy_merkle.js --network goerli",

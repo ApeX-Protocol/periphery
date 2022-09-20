@@ -3,17 +3,17 @@ const { BigNumber } = require("@ethersproject/bignumber");
 const verifyStr = "npx hardhat verify --network";
 
 const apeXAddress = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
-const usdcAddress = "0xd44bb808bfe43095dbb94c83077766382d63952a";
-const bananaAddress = "0xFb2482208311fDe0b210D833C91e216ceAD0A881";
+const usdcAddress = "0xd44BB808bfE43095dBb94c83077766382D63952a";
+const bananaAddress = "";
 const keeper = "0xf166a0dfBce1B0Aa674E163B05b66906Db3B530e";
-const twamm = "0xcdda22E7286516887B170563d497b658F8CB25CF";
+const twamm = "0x70Ced1b9Ae6E51CFDc03b9E2458b7D59Ec85458b";
 const initPrice = BigNumber.from("400000000000000");
 // const startTime = Math.floor(new Date() / 1000) + 60;
-const startTime = 1663027200;
-const redeemTime = 1663545600;
-const duration = 24 * 60 * 60;
+const startTime = 1663639200;
+const redeemTime = 1663657200;
+const duration = 1 * 60 * 60;
 const distributeTime = startTime + duration;
-const initReward = BigNumber.from("961538461538461600000000000");
+const initReward = BigNumber.from("10000000000000000000000");
 const delta = 50;
 
 let owner;
@@ -28,8 +28,8 @@ const main = async () => {
   [owner] = await ethers.getSigners();
   await createOrAttachMockToken();
   await createOrAttachBanana();
-  // await createClaimable();
-  // await createDistributor();
+  await createClaimable();
+  await createDistributor();
   await createBuybackPool();
 };
 
@@ -68,6 +68,8 @@ async function createOrAttachBanana() {
     banana = await Banana.deploy(apeX.address, redeemTime);
     console.log("Banana:", banana.address);
     console.log(verifyStr, process.env.HARDHAT_NETWORK, banana.address, apeX.address, redeemTime);
+    // await apeX.approve(banana.address, BigNumber.from("1000000000000000000000000"));
+    // await banana.mint(owner.address, BigNumber.from("1000000000000000000000000"));
   } else {
     banana = Banana.attach(bananaAddress);
   }
@@ -78,6 +80,7 @@ async function createClaimable() {
   claimable = await BananaClaimable.deploy(banana.address);
   console.log("BananaClaimable:", claimable.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, claimable.address, banana.address);
+  await claimable.setSigner(keeper, true);
 }
 
 async function createDistributor() {
@@ -109,7 +112,7 @@ async function createDistributor() {
 async function createBuybackPool() {
   if (distributor == null) {
     const BananaDistributor = await ethers.getContractFactory("BananaDistributor");
-    distributor = BananaDistributor.attach("0x37507455a4757d63Cc146A4c7c771e2179323FBf");
+    distributor = BananaDistributor.attach("0x2f33aa43ef28e23aFb0fBDAa745eF073B6D79721");
   }
 
   const BuybackPool = await ethers.getContractFactory("BuybackPool");
