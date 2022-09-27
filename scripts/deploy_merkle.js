@@ -2,8 +2,8 @@ const { ethers, upgrades } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
 const verifyStr = "npx hardhat verify --network";
 
-let apeXToken = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
-let merkleRoot = "0x7c699dc00fdf504bd60197f95d38db8d41ef44f84739806d77d7460baea348a4";
+let apeXToken = "0x2d512dA093d68462970472d6ace048a9bb78fDc1";
+let merkleRoot = "0x642ddf0a3015c5ab474abf7a13644c488381706b2b589915bc4e01056f3f9464";
 let merkleDistributor;
 
 const main = async () => {

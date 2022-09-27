@@ -33,6 +33,7 @@ contract BuybackPool is Ownable, AnalyticMath {
     uint256 public secondsOfEpoch;
     uint256 public lastOrderId = type(uint256).max;
     uint256 public lastExecuteTime;
+    uint256 public endTime;
 
     bool public initialized;
     bool public isStop;
@@ -46,7 +47,8 @@ contract BuybackPool is Ownable, AnalyticMath {
         uint256 secondsOfEpoch_,
         uint256 initPrice,
         uint256 initReward,
-        uint256 startTime
+        uint256 startTime,
+        uint256 endTime_
     ) {
         owner = msg.sender;
         banana = banana_;
@@ -58,6 +60,7 @@ contract BuybackPool is Ownable, AnalyticMath {
         priceT2 = initPrice;
         rewardT2 = initReward;
         lastExecuteTime = startTime;
+        endTime = endTime_;
     }
 
     function initBuyingRate(uint256 amountIn) external onlyOwner {
@@ -84,6 +87,10 @@ contract BuybackPool is Ownable, AnalyticMath {
 
     function updateLastExecuteTime(uint256 newExecuteTime) external onlyOwner {
         lastExecuteTime = newExecuteTime;
+    }
+
+    function updateEndTime(uint256 endTime_) external onlyOwner {
+        endTime = endTime_;
     }
 
     function updateStatus(bool isStop_) external onlyOwner {
@@ -117,6 +124,7 @@ contract BuybackPool is Ownable, AnalyticMath {
         require(msg.sender == keeper, "only keeper");
         lastExecuteTime = lastExecuteTime + secondsOfEpoch;
         require(block.timestamp >= lastExecuteTime, "not reach execute time");
+        require(block.timestamp < endTime, "end");
 
         uint256 burnAmount;
         if (lastOrderId != type(uint256).max) {

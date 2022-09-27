@@ -9,9 +9,10 @@ const keeper = "0xf166a0dfBce1B0Aa674E163B05b66906Db3B530e";
 const twamm = "0x70Ced1b9Ae6E51CFDc03b9E2458b7D59Ec85458b";
 const initPrice = BigNumber.from("400000000000000");
 // const startTime = Math.floor(new Date() / 1000) + 60;
-const startTime = 1663639200;
-const redeemTime = 1663657200;
-const duration = 1 * 60 * 60;
+const startTime = 1664161200;
+const endTime = 1664190000;
+const redeemTime = 1664193600;
+const duration = 2 * 60 * 60;
 const distributeTime = startTime + duration;
 const initReward = BigNumber.from("10000000000000000000000");
 const delta = 50;
@@ -91,6 +92,7 @@ async function createDistributor() {
     claimable.address,
     duration,
     distributeTime,
+    endTime,
     initReward,
     delta
   );
@@ -104,6 +106,7 @@ async function createDistributor() {
     claimable.address,
     duration,
     distributeTime,
+    endTime,
     initReward.toString(),
     delta
   );
@@ -125,7 +128,8 @@ async function createBuybackPool() {
     duration,
     initPrice,
     initReward,
-    startTime
+    startTime,
+    endTime
   );
   console.log("BuybackPool:", buybackPool.address);
   console.log(
@@ -140,7 +144,8 @@ async function createBuybackPool() {
     duration,
     initPrice.toString(),
     initReward.toString(),
-    startTime
+    startTime,
+    endTime
   );
 }
 

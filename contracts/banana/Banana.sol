@@ -4,12 +4,15 @@ pragma solidity ^0.8.0;
 import "./interfaces/IBanana.sol";
 import "../utils/Ownable.sol";
 import "../libraries/TransferHelper.sol";
+import "../libraries/FullMath.sol";
 
 contract Banana is IBanana, Ownable {
+    using FullMath for uint256;
+
     string public constant override name = "Banana";
     string public constant override symbol = "BANA";
     uint8 public constant override decimals = 18;
-    
+
     address public override apeXToken;
     uint256 public override redeemTime;
     uint256 public override totalSupply;
@@ -17,7 +20,7 @@ contract Banana is IBanana, Ownable {
     mapping(address => mapping(address => uint256)) public override allowance;
 
     mapping(address => bool) public minters;
-    
+
     constructor(address apeXToken_, uint256 redeemTime_) {
         owner = msg.sender;
         apeXToken = apeXToken_;
@@ -48,7 +51,7 @@ contract Banana is IBanana, Ownable {
         if (totalSupply == 0) {
             mintAmount = apeXAmount * 1000;
         } else {
-            mintAmount = apeXAmount * totalSupply / apeXBalance;
+            mintAmount = apeXAmount.mulDiv(totalSupply, apeXBalance);
         }
 
         TransferHelper.safeTransferFrom(apeXToken, msg.sender, address(this), apeXAmount);
@@ -72,7 +75,7 @@ contract Banana is IBanana, Ownable {
         require(balanceOf[msg.sender] >= amount, "not enough balance");
 
         uint256 totalApeX = IERC20(apeXToken).balanceOf(address(this));
-        uint256 apeXAmount = amount * totalApeX / totalSupply / 1000;
+        uint256 apeXAmount = amount.mulDiv(totalApeX, totalSupply);
 
         _burn(msg.sender, amount);
         TransferHelper.safeTransfer(apeXToken, msg.sender, apeXAmount);

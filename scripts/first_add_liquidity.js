@@ -14,7 +14,7 @@ async function main() {
   console.log("Account balance:", (await account.getBalance()).toString());
 
   //banana
-  const token0Addr = "0xFa8ceA22A7fe57F51DB931C021Ad96811e73987e";
+  const token0Addr = "0x2C9B51B6861F97f8Cd5F97F7723AE179827b0740";
   let banaPrice = 0.0004;
   let usdcAmount = 100000;
   const initialToken0Supply = ethers.utils.parseUnits("1").mul(usdcAmount / banaPrice);
