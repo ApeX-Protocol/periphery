@@ -6,20 +6,11 @@ interface ITWAMM {
 
     function WETH() external view returns (address);
 
-    function obtainReserves(address token0, address token1)
-        external
-        view
-        returns (uint256 reserve0, uint256 reserve1);
+    function obtainReserves(address token0, address token1) external view returns (uint256 reserve0, uint256 reserve1);
 
-    function obtainTotalSupply(address token0, address token1)
-        external
-        view
-        returns (uint256);
+    function obtainTotalSupply(address token0, address token1) external view returns (uint256);
 
-    function obtainPairAddress(address token0, address token1)
-        external
-        view
-        returns (address);
+    function obtainPairAddress(address token0, address token1) external view returns (address);
 
     function createPairWrapper(
         address token0,
@@ -123,13 +114,13 @@ interface ITWAMM {
         address token,
         uint256 orderId,
         uint256 deadline
-    ) external returns (uint256 unsoldAmount, uint256 purchasedAmount);
+    ) external returns (uint256 unsoldTokenAmount, uint256 purchasedETHAmount);
 
     function cancelTermSwapETHToToken(
         address token,
         uint256 orderId,
         uint256 deadline
-    ) external returns (uint256 unsoldAmount, uint256 purchasedAmount);
+    ) external returns (uint256 unsoldETHAmount, uint256 purchasedTokenAmount);
 
     function withdrawProceedsFromTermSwapTokenToToken(
         address token0,
@@ -142,14 +133,13 @@ interface ITWAMM {
         address token,
         uint256 orderId,
         uint256 deadline
-    ) external returns (uint256 proceeds);
+    ) external returns (uint256 proceedsETH);
 
     function withdrawProceedsFromTermSwapETHToToken(
         address token,
         uint256 orderId,
         uint256 deadline
-    ) external returns (uint256 proceeds);
+    ) external returns (uint256 proceedsToken);
 
-    function executeVirtualOrdersWrapper(address pair, uint256 blockNumber)
-        external;
+    function executeVirtualOrdersWrapper(address pair, uint256 blockNumber) external;
 }

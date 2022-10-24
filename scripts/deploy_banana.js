@@ -4,17 +4,17 @@ const verifyStr = "npx hardhat verify --network";
 
 const apeXAddress = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
 const usdcAddress = "0xd44BB808bfE43095dBb94c83077766382D63952a";
-const bananaAddress = "";
-const keeper = "0xf166a0dfBce1B0Aa674E163B05b66906Db3B530e";
-const twamm = "0x70Ced1b9Ae6E51CFDc03b9E2458b7D59Ec85458b";
+const bananaAddress = "0xC4C177aC1c81BD64d952b43d4503afB18dA59034";
+const keeper = "0x6C7866b45F0A7954A69CE5F37850FB857E9C48b8";
+const twamm = "0x4B515d471Fff68d5996a6567d7F33e3DFd19D96A";
 const initPrice = BigNumber.from("400000000000000");
 // const startTime = Math.floor(new Date() / 1000) + 60;
-const startTime = 1664161200;
-const endTime = 1664190000;
-const redeemTime = 1664193600;
-const duration = 2 * 60 * 60;
+const startTime = 1666108800;
+const endTime = 1697644800;
+const redeemTime = 1697644800;
+const duration = 12 * 60 * 60;
 const distributeTime = startTime + duration;
-const initReward = BigNumber.from("10000000000000000000000");
+const initReward = BigNumber.from("961538461538461600000000000");
 const delta = 50;
 
 let owner;
@@ -27,34 +27,34 @@ let buybackPool;
 
 const main = async () => {
   [owner] = await ethers.getSigners();
-  await createOrAttachMockToken();
+  // await createOrAttachMockToken();
   await createOrAttachBanana();
   await createClaimable();
-  await createDistributor();
-  await createBuybackPool();
+  // await createDistributor();
+  // await createBuybackPool();
 };
 
 async function createOrAttachMockToken() {
   const MockToken = await ethers.getContractFactory("MockToken");
   if (apeXAddress == "") {
-    apeX = await MockToken.deploy("MockApeX", "APEX");
+    apeX = await MockToken.deploy("MockApeX", "mAPEX");
     await apeX.mint(owner.address, BigNumber.from("10000000000000000000000000000"));
     console.log("APEX:", apeX.address);
-    console.log(verifyStr, process.env.HARDHAT_NETWORK, apeX.address, "MockApeX", "APEX");
+    console.log(verifyStr, process.env.HARDHAT_NETWORK, apeX.address, "MockApeX", "mAPEX");
   } else {
     apeX = MockToken.attach(apeXAddress);
   }
 
   const MyToken = await ethers.getContractFactory("MyToken");
   if (usdcAddress == "") {
-    usdc = await MyToken.deploy("MockUSDC", "USDC", 6, BigNumber.from("10000000000000000"));
+    usdc = await MyToken.deploy("MockUSDC", "mUSDC", 6, BigNumber.from("10000000000000000"));
     console.log("USDC:", usdc.address);
     console.log(
       verifyStr,
       process.env.HARDHAT_NETWORK,
       usdc.address,
       "MockUSDC",
-      "USDC",
+      "mUSDC",
       6,
       BigNumber.from("10000000000000000").toString()
     );
@@ -115,7 +115,7 @@ async function createDistributor() {
 async function createBuybackPool() {
   if (distributor == null) {
     const BananaDistributor = await ethers.getContractFactory("BananaDistributor");
-    distributor = BananaDistributor.attach("0x2f33aa43ef28e23aFb0fBDAa745eF073B6D79721");
+    distributor = BananaDistributor.attach("0x26045156Bf77E36eE0C9666Cef4a365392ed85bc");
   }
 
   const BuybackPool = await ethers.getContractFactory("BuybackPool");

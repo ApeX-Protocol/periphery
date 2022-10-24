@@ -13,7 +13,7 @@ contract BananaDistributor is Ownable, AnalyticMath {
     event SetEmergency(bool emergency);
     event Distribute(address indexed recipient, uint256 reward, uint256 fees);
 
-    address public banana; // $BANA token address
+    address public immutable banana; // $BANA token address
     address public keeper;
     address public rewardRecipient;
 

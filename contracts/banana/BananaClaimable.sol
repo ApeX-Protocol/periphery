@@ -14,10 +14,12 @@ contract BananaClaimable is Reentrant, Ownable {
     event SetSigner(address signer, bool state);
     event Claim(address indexed user, uint8 useFor, uint256 amount, bytes nonce);
 
-    address public banana;
+    address public immutable banana;
     bool public emergency;
     mapping(address => bool) public signers;
     mapping(bytes => bool) public usedNonce;
+    // accountId => expireAt
+    mapping(uint256 => uint256) public claimedAt;
 
     constructor(address banana_) {
         owner = msg.sender;
@@ -42,14 +44,16 @@ contract BananaClaimable is Reentrant, Ownable {
     function claim(
         address user,
         uint8 useFor,
+        uint256 accountId,
         uint256 amount,
         uint256 expireAt,
         bytes calldata nonce,
         bytes memory signature
     ) external nonReentrant {
         require(!emergency, "EMERGENCY");
-        verify(user, useFor, amount, expireAt, nonce, signature);
+        verify(user, useFor, accountId, amount, expireAt, nonce, signature);
         usedNonce[nonce] = true;
+        claimedAt[accountId] = expireAt;
         TransferHelper.safeTransfer(banana, user, amount);
         emit Claim(user, useFor, amount, nonce);
     }
@@ -57,17 +61,19 @@ contract BananaClaimable is Reentrant, Ownable {
     function verify(
         address user,
         uint8 useFor,
+        uint256 accountId,
         uint256 amount,
         uint256 expireAt,
         bytes calldata nonce,
         bytes memory signature
     ) public view returns (bool) {
-        address recover = keccak256(abi.encode(user, useFor, amount, expireAt, nonce, address(this)))
+        address recover = keccak256(abi.encode(user, useFor, accountId, amount, expireAt, nonce, address(this)))
             .toEthSignedMessageHash()
             .recover(signature);
         require(signers[recover], "NOT_SIGNER");
         require(!usedNonce[nonce], "NONCE_USED");
         require(expireAt > block.timestamp, "EXPIRED");
+        require(block.timestamp > claimedAt[accountId], "CLAIMED");
         return true;
     }
 }

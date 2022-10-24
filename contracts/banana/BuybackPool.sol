@@ -16,10 +16,10 @@ contract BuybackPool is Ownable, AnalyticMath {
 
     event BuybackExecuted(uint256 orderId, uint256 amountIn, uint256 buyingRate, uint256 burned);
 
-    address public banana;
-    address public usdc;
-    address public twamm;
-    address public bananaDistributor;
+    address public immutable banana;
+    address public immutable usdc;
+    address public immutable twamm;
+    address public immutable bananaDistributor;
     address public keeper;
 
     uint256 public lastBuyingRate;

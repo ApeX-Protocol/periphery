@@ -13,7 +13,7 @@ contract Banana is IBanana, Ownable {
     string public constant override symbol = "BANA";
     uint8 public constant override decimals = 18;
 
-    address public override apeXToken;
+    address public immutable override apeXToken;
     uint256 public override redeemTime;
     uint256 public override totalSupply;
     mapping(address => uint256) public override balanceOf;
