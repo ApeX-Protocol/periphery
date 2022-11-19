@@ -14,17 +14,17 @@ async function main() {
   console.log("Account balance:", (await account.getBalance()).toString());
 
   //banana
-  const token0Addr = "0xC4C177aC1c81BD64d952b43d4503afB18dA59034";
-  let banaPrice = 0.0004;
-  let usdcAmount = 100000;
-  const initialToken0Supply = ethers.utils.parseUnits("1").mul(usdcAmount / banaPrice);
+  const token0Addr = "0x9a3927Bb8645aDc8075b20bBAe025B9AD553eB3E";
+  let banaPrice = 0.00029;
+  let usdcAmount = 250000;
+  const initialToken0Supply = BigNumber.from("862068965517241400000000000");
   console.log("banana: ", initialToken0Supply);
   //usdc
   const token1Addr = "0xd44BB808bfE43095dBb94c83077766382D63952a";
   const initialToken1Supply = BigNumber.from(usdcAmount * 1000000);
   console.log("usdc: ", initialToken1Supply);
 
-  const TWAMMAddr = "0x4B515d471Fff68d5996a6567d7F33e3DFd19D96A";
+  const TWAMMAddr = "0xd7F7071a7229Da970c81B022d8Be1BdaE1486351";
 
   const token0 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token0Addr);
   const token1 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token1Addr);

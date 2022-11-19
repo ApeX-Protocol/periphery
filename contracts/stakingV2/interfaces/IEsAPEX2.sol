@@ -34,6 +34,16 @@ interface IEsAPEX2 is IERC20 {
 
     function getTotalClaimable(address user, uint256[] memory vestIds) external view returns (uint256 claimable);
 
+    function getForceWithdrawable(address user, uint256 vestId)
+        external
+        view
+        returns (uint256 withdrawable, uint256 penalty);
+
+    function getTotalForceWithdrawable(address user, uint256[] memory vestIds)
+        external
+        view
+        returns (uint256 withdrawable, uint256 penalty);
+
     function mint(address to, uint256 apeXAmount) external returns (bool);
 
     function vest(uint256 amount) external;

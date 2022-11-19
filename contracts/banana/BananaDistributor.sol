@@ -82,6 +82,14 @@ contract BananaDistributor is Ownable, AnalyticMath {
         endTime = endTime_;
     }
 
+    function resetLastReward(uint256 newLastReward) external onlyOwner {
+        lastReward = newLastReward;
+    }
+
+    function resetLastFees(uint256 newLastFees) external onlyOwner {
+        lastFees = newLastFees;
+    }
+
     function distribute(uint256 fees) external returns (uint256) {
         require(!emergency, "EMERGENCY");
         require(msg.sender == keeper, "forbidden");
@@ -108,5 +116,18 @@ contract BananaDistributor is Ownable, AnalyticMath {
 
         emit Distribute(rewardRecipient, newReward, fees);
         return newReward;
+    }
+
+    function calReward(uint256 fees) external view returns (uint256 newReward) {
+        newReward = lastReward;
+        if (lastFees > 0) {
+            (uint256 numerator, uint256 denominator) = pow(fees, lastFees, delta, 100);
+            newReward = lastReward.mulDiv(numerator, denominator);
+        }
+
+        uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
+        if (newReward > bananaBalance) {
+            newReward = bananaBalance;
+        }
     }
 }

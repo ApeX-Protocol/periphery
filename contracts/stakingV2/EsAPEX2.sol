@@ -168,6 +168,28 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         }
     }
 
+    function getForceWithdrawable(address user, uint256 vestId)
+        external
+        view
+        override
+        returns (uint256 withdrawable, uint256 penalty)
+    {
+        return _getForceWithdrawable(user, vestId);
+    }
+
+    function getTotalForceWithdrawable(address user, uint256[] memory vestIds)
+        external
+        view
+        override
+        returns (uint256 withdrawable, uint256 penalty)
+    {
+        for (uint256 i = 0; i < vestIds.length; i++) {
+            (uint256 withdrawable_, uint256 penalty_) = _getForceWithdrawable(user, vestIds[i]);
+            withdrawable += withdrawable_;
+            penalty += penalty_;
+        }
+    }
+
     function _getClaimable(address user, uint256 vestId) internal view returns (uint256 claimable) {
         VestInfo memory info = userVestInfos[user][vestId];
         uint256 pastTime = block.timestamp - info.startTime;
@@ -178,6 +200,27 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
             claimable = info.vestAmount.mulDiv(pastTime, wholeTime);
         }
         claimable = claimable - info.claimedAmount;
+    }
+
+    function _getForceWithdrawable(address user, uint256 vestId)
+        internal
+        view
+        returns (uint256 withdrawable, uint256 penalty)
+    {
+        VestInfo memory info = userVestInfos[user][vestId];
+        if (info.forceWithdrawn) {
+            return (0, 0);
+        }
+
+        uint256 claimable = _getClaimable(user, vestId);
+        uint256 locking = info.vestAmount - claimable;
+        uint256 left = (locking *
+            (forceWithdrawMinRemainRatio +
+                ((10000 - forceWithdrawMinRemainRatio) * (block.timestamp - info.startTime)) /
+                vestTime)) / 10000;
+        if (left > locking) left = locking;
+        withdrawable = claimable + left;
+        penalty = locking - left;
     }
 
     function _withdraw(

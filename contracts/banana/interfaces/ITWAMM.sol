@@ -37,12 +37,16 @@ interface ITWAMM {
         address token0,
         address token1,
         uint256 lpTokenAmount,
+        uint256 amountIn0Max,
+        uint256 amountIn1Max,
         uint256 deadline
     ) external returns (uint256 amountIn0, uint256 amountIn1);
 
     function addLiquidityETH(
         address token,
         uint256 lpTokenAmount,
+        uint256 amountTokenInMax,
+        uint256 amountETHInMax,
         uint256 deadline
     ) external payable returns (uint256 amountTokenIn, uint256 amountETHIn);
 
@@ -50,12 +54,16 @@ interface ITWAMM {
         address token0,
         address token1,
         uint256 lpTokenAmount,
+        uint256 amountOut0Min,
+        uint256 amountOut1Min,
         uint256 deadline
     ) external returns (uint256 amountOut0, uint256 amountOut1);
 
     function withdrawLiquidityETH(
         address token,
         uint256 lpTokenAmount,
+        uint256 amountTokenOutMin,
+        uint256 amountETHOutMin,
         uint256 deadline
     ) external returns (uint256 amountTokenOut, uint256 amountETHOut);
 

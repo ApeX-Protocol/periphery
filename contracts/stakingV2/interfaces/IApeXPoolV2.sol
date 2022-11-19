@@ -12,5 +12,5 @@ interface IApeXPoolV2 {
 
     function stakeEsApeX(uint256 amount, uint256 lockDuration) external;
 
-    function vest(uint256 amount) external;
+    function unstakeApeX(uint256) external;
 }

@@ -15,6 +15,7 @@ contract BuybackPool is Ownable, AnalyticMath {
     using FullMath for uint256;
 
     event BuybackExecuted(uint256 orderId, uint256 amountIn, uint256 buyingRate, uint256 burned);
+    event WithdrawAndBurn(uint256 orderId, uint256 burnAmount);
 
     address public immutable banana;
     address public immutable usdc;
@@ -63,11 +64,11 @@ contract BuybackPool is Ownable, AnalyticMath {
         endTime = endTime_;
     }
 
-    function initBuyingRate(uint256 amountIn) external onlyOwner {
-        require(!initialized, "already initialized");
-        initialized = true;
-        lastBuyingRate = amountIn / secondsOfEpoch;
-    }
+    // function initBuyingRate(uint256 amountIn) external onlyOwner {
+    //     require(!initialized, "already initialized");
+    //     initialized = true;
+    //     lastBuyingRate = amountIn / secondsOfEpoch;
+    // }
 
     function updatePriceIndex(uint256 newPriceIndex) external onlyOwner {
         priceIndex = newPriceIndex;
@@ -101,6 +102,16 @@ contract BuybackPool is Ownable, AnalyticMath {
         keeper = keeper_;
     }
 
+    function resetPrice(uint256 newPriceT1, uint256 newPriceT2) external onlyOwner {
+        priceT1 = newPriceT1;
+        priceT2 = newPriceT2;
+    }
+
+    function resetReward(uint256 newRewardT1, uint256 newRewardT2) external onlyOwner {
+        rewardT1 = newRewardT1;
+        rewardT2 = newRewardT2;
+    }
+
     function withdrawUsdc(address to) external onlyOwner {
         require(isStop, "not stop");
         uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
@@ -116,15 +127,16 @@ contract BuybackPool is Ownable, AnalyticMath {
         uint256 bananaBalance = IERC20(banana).balanceOf(address(this));
         require(bananaBalance > 0, "nothing to burn");
         IBanana(banana).burn(bananaBalance);
+        emit WithdrawAndBurn(orderId, bananaBalance);
     }
 
     function execute() external {
-        require(initialized, "uninitialized");
         require(!isStop, "is stop");
         require(msg.sender == keeper, "only keeper");
+        require(block.timestamp < endTime, "end");
         lastExecuteTime = lastExecuteTime + secondsOfEpoch;
         require(block.timestamp >= lastExecuteTime, "not reach execute time");
-        require(block.timestamp < endTime, "end");
+        require(lastExecuteTime + secondsOfEpoch > block.timestamp, "over next epoch time");
 
         uint256 burnAmount;
         if (lastOrderId != type(uint256).max) {
@@ -136,30 +148,6 @@ contract BuybackPool is Ownable, AnalyticMath {
             burnAmount = IERC20(banana).balanceOf(address(this));
             IBanana(banana).burn(burnAmount);
         }
-
-        if (priceT1 > 0 && priceT2 > 0 && rewardT1 > 0 && rewardT2 > 0) {
-            (uint256 pn, uint256 pd) = pow(priceT2, priceT1, priceIndex, 100);
-            (uint256 rn, uint256 rd) = pow(rewardT1, rewardT2, rewardIndex, 100);
-            lastBuyingRate = lastBuyingRate.mulDiv(pn, pd).mulDiv(rn, rd);
-        }
-
-        require(lastExecuteTime + secondsOfEpoch > block.timestamp, "over next opech time");
-        uint256 deltaTime = lastExecuteTime + secondsOfEpoch - block.timestamp;
-        uint256 amountIn = deltaTime * lastBuyingRate;
-        uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
-        if (amountIn > usdcBalance) {
-            amountIn = usdcBalance;
-            lastBuyingRate = amountIn / deltaTime;
-        }
-        require(amountIn > 0, "buying amount is 0");
-        IERC20(usdc).approve(twamm, amountIn);
-        lastOrderId = ITWAMM(twamm).longTermSwapTokenToToken(
-            usdc,
-            banana,
-            amountIn,
-            deltaTime / (secondsPerBlock * 5),
-            block.timestamp
-        );
 
         uint256 lastReward = IBananaDistributor(bananaDistributor).lastReward();
         if (rewardT1 > 0) {
@@ -173,6 +161,34 @@ contract BuybackPool is Ownable, AnalyticMath {
             priceT2 = priceT1;
         }
         priceT1 = currentPrice;
+
+        uint256 deltaTime = lastExecuteTime + secondsOfEpoch - block.timestamp;
+        uint256 usdcBalance = IERC20(usdc).balanceOf(address(this));
+        uint256 amountIn;
+        if (!initialized) {
+            amountIn = usdcBalance;
+            lastBuyingRate = amountIn / deltaTime;
+            initialized = true;
+        } else {
+            (uint256 pn, uint256 pd) = pow(priceT2, priceT1, priceIndex, 100);
+            (uint256 rn, uint256 rd) = pow(rewardT1, rewardT2, rewardIndex, 100);
+            lastBuyingRate = lastBuyingRate.mulDiv(pn, pd).mulDiv(rn, rd);
+            amountIn = deltaTime * lastBuyingRate;
+            if (amountIn > usdcBalance) {
+                amountIn = usdcBalance;
+                lastBuyingRate = amountIn / deltaTime;
+            }
+        }
+
+        require(amountIn > 0, "buying amount is 0");
+        IERC20(usdc).approve(twamm, amountIn);
+        lastOrderId = ITWAMM(twamm).longTermSwapTokenToToken(
+            usdc,
+            banana,
+            amountIn,
+            deltaTime / (secondsPerBlock * 5),
+            block.timestamp
+        );
 
         emit BuybackExecuted(lastOrderId, amountIn, lastBuyingRate, burnAmount);
     }

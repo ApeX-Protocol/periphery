@@ -48,7 +48,7 @@ contract BananaClaimable is Reentrant, Ownable {
         uint256 amount,
         uint256 expireAt,
         bytes calldata nonce,
-        bytes memory signature
+        bytes calldata signature
     ) external nonReentrant {
         require(!emergency, "EMERGENCY");
         verify(user, useFor, accountId, amount, expireAt, nonce, signature);
@@ -65,7 +65,7 @@ contract BananaClaimable is Reentrant, Ownable {
         uint256 amount,
         uint256 expireAt,
         bytes calldata nonce,
-        bytes memory signature
+        bytes calldata signature
     ) public view returns (bool) {
         address recover = keccak256(abi.encode(user, useFor, accountId, amount, expireAt, nonce, address(this)))
             .toEthSignedMessageHash()

@@ -112,11 +112,14 @@ contract Banana is IBanana, Ownable {
         uint256 currentAllowance = allowance[from][spender];
         if (currentAllowance != type(uint256).max) {
             require(currentAllowance >= value, "insufficient allowance");
-            allowance[from][spender] = currentAllowance - value;
+            unchecked {
+                _approve(owner, spender, currentAllowance - value);
+            }
         }
     }
 
     function _mint(address to, uint256 value) internal {
+        require(to != address(0), "zero address");
         totalSupply = totalSupply + value;
         balanceOf[to] = balanceOf[to] + value;
         emit Transfer(address(0), to, value);
