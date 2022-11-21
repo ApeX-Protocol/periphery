@@ -14,17 +14,17 @@ async function main() {
   console.log("Account balance:", (await account.getBalance()).toString());
 
   //banana
-  const token0Addr = "0x9a3927Bb8645aDc8075b20bBAe025B9AD553eB3E";
+  const token0Addr = "0x2A1DCA74419c2D304A3D359F428eE1A4e9324A90";
   let banaPrice = 0.00029;
   let usdcAmount = 250000;
   const initialToken0Supply = BigNumber.from("862068965517241400000000000");
   console.log("banana: ", initialToken0Supply);
   //usdc
-  const token1Addr = "0xd44BB808bfE43095dBb94c83077766382D63952a";
+  const token1Addr = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
   const initialToken1Supply = BigNumber.from(usdcAmount * 1000000);
   console.log("usdc: ", initialToken1Supply);
 
-  const TWAMMAddr = "0xd7F7071a7229Da970c81B022d8Be1BdaE1486351";
+  const TWAMMAddr = "0xcd43AbA971bEF65555D877657F83093dDFB885b8";
 
   const token0 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token0Addr);
   const token1 = await ethers.getContractAt("contracts/interfaces/IERC20.sol:IERC20", token1Addr);
@@ -49,33 +49,33 @@ async function main() {
   const pairAddr = await twamm.obtainPairAddress(token0Addr, token1Addr);
   console.log("pair address check", pairAddr);
 
-  console.log("add initial liquidity");
-  let pairContract = await ethers.getContractAt("IPair", pairAddr);
-  let lpamount = await pairContract.getTotalSupply();
-  console.log("lpamount", lpamount);
+  // console.log("add initial liquidity");
+  // let pairContract = await ethers.getContractAt("IPair", pairAddr);
+  // let lpamount = await pairContract.getTotalSupply();
+  // console.log("lpamount", lpamount);
 
-  let tokenAReserve = await pairContract.tokenAReserves();
-  console.log("tokenAReserve", tokenAReserve);
-  let tokenBReserve = await pairContract.tokenBReserves();
-  console.log("tokenBReserve", tokenBReserve);
+  // let tokenAReserve = await pairContract.tokenAReserves();
+  // console.log("tokenAReserve", tokenAReserve);
+  // let tokenBReserve = await pairContract.tokenBReserves();
+  // console.log("tokenBReserve", tokenBReserve);
 
-  let tx1 = await token0.approve(TWAMMAddr, initialToken0Supply); //owner calls it
-  await tx1.wait();
-  tx1 = await token1.approve(TWAMMAddr, initialToken1Supply);
-  await tx1.wait();
-  tx1 = await twamm.addInitialLiquidity(
-    token0Addr,
-    token1Addr,
-    initialToken0Supply,
-    initialToken1Supply,
-    timeStamp + 300
-  );
-  await tx1.wait();
+  // let tx1 = await token0.approve(TWAMMAddr, initialToken0Supply); //owner calls it
+  // await tx1.wait();
+  // tx1 = await token1.approve(TWAMMAddr, initialToken1Supply);
+  // await tx1.wait();
+  // tx1 = await twamm.addInitialLiquidity(
+  //   token0Addr,
+  //   token1Addr,
+  //   initialToken0Supply,
+  //   initialToken1Supply,
+  //   timeStamp + 300
+  // );
+  // await tx1.wait();
 
-  let [reserve0, reserve1] = await twamm.obtainReserves(token0.address, token1.address);
+  // let [reserve0, reserve1] = await twamm.obtainReserves(token0.address, token1.address);
 
-  console.log("reserve0: ", reserve0);
-  console.log("reserve1: ", reserve1);
+  // console.log("reserve0: ", reserve0);
+  // console.log("reserve1: ", reserve1);
 }
 
 main()
