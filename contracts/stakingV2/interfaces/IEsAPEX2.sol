@@ -8,7 +8,13 @@ interface IEsAPEX2 is IERC20 {
     event VestTimeChanged(uint256 oldVestTime, uint256 newVestTime);
     event Vest(address indexed user, uint256 amount, uint256 endTime, uint256 vestId);
     event Withdraw(address indexed user, address indexed to, uint256 amount, uint256 vestId);
-    event ForceWithdraw(address indexed user, address indexed to, uint256 amount, uint256 vestId);
+    event ForceWithdraw(
+        address indexed user,
+        address indexed to,
+        uint256 withdrawAmount,
+        uint256 penalty,
+        uint256 vestId
+    );
 
     struct VestInfo {
         uint256 startTime;
@@ -28,11 +34,21 @@ interface IEsAPEX2 is IERC20 {
 
     function getVestInfo(address user, uint256 vestId) external view returns (VestInfo memory);
 
+    function getVestInfosByPage(
+        address user,
+        uint256 offset,
+        uint256 size
+    ) external view returns (VestInfo[] memory vestInfos);
+
     function getVestInfosLength(address user) external view returns (uint256 length);
 
     function getClaimable(address user, uint256 vestId) external view returns (uint256 claimable);
 
     function getTotalClaimable(address user, uint256[] memory vestIds) external view returns (uint256 claimable);
+
+    function getLocking(address user, uint256 vestId) external view returns (uint256 locking);
+
+    function getTotalLocking(address user, uint256[] memory vestIds) external view returns (uint256 locking);
 
     function getForceWithdrawable(address user, uint256 vestId)
         external
@@ -60,7 +76,9 @@ interface IEsAPEX2 is IERC20 {
         uint256[] memory amounts
     ) external;
 
-    function forceWithdraw(address to, uint256 vestId) external returns (uint256 withdrawAmount);
+    function forceWithdraw(address to, uint256 vestId) external returns (uint256 withdrawAmount, uint256 penalty);
 
-    function batchForceWithdraw(address to, uint256[] memory vestIds) external returns (uint256 withdrawAmount);
+    function batchForceWithdraw(address to, uint256[] memory vestIds)
+        external
+        returns (uint256 withdrawAmount, uint256 penalty);
 }

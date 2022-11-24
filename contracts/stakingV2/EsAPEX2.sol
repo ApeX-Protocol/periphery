@@ -26,12 +26,13 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
     mapping(address => VestInfo[]) public userVestInfos;
 
     constructor(
+        address owner_,
         address apeXToken_,
         address treasury_,
         uint256 vestTime_,
         uint256 forceWithdrawMinRemainRatio_
     ) {
-        owner = msg.sender;
+        owner = owner_;
         apeXToken = apeXToken_;
         treasury = treasury_;
         vestTime = vestTime_;
@@ -111,17 +112,23 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         }
     }
 
-    function forceWithdraw(address to, uint256 vestId) external override returns (uint256 withdrawAmount) {
+    function forceWithdraw(address to, uint256 vestId)
+        external
+        override
+        returns (uint256 withdrawAmount, uint256 penalty)
+    {
         return _forceWithdraw(to, vestId);
     }
 
     function batchForceWithdraw(address to, uint256[] memory vestIds)
         external
         override
-        returns (uint256 withdrawAmount)
+        returns (uint256 withdrawAmount, uint256 penalty)
     {
         for (uint256 i = 0; i < vestIds.length; i++) {
-            withdrawAmount += _forceWithdraw(to, vestIds[i]);
+            (uint256 withdrawAmount_, uint256 penalty_) = _forceWithdraw(to, vestIds[i]);
+            withdrawAmount += withdrawAmount_;
+            penalty += penalty_;
         }
     }
 
@@ -149,6 +156,24 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         return userVestInfos[user][vestId];
     }
 
+    function getVestInfosByPage(
+        address user,
+        uint256 offset,
+        uint256 size
+    ) external view override returns (VestInfo[] memory vestInfos) {
+        uint256 len = userVestInfos[user].length;
+        if (offset > len) {
+            return vestInfos;
+        }
+        if (size >= len - offset) {
+            size = len - offset;
+        }
+        vestInfos = new VestInfo[](size);
+        for (uint256 i = 0; i < len; i++) {
+            vestInfos[i] = userVestInfos[user][offset + i];
+        }
+    }
+
     function getVestInfosLength(address user) external view override returns (uint256 length) {
         return userVestInfos[user].length;
     }
@@ -165,6 +190,16 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
     {
         for (uint256 i = 0; i < vestIds.length; i++) {
             claimable += _getClaimable(user, vestIds[i]);
+        }
+    }
+
+    function getLocking(address user, uint256 vestId) external view override returns (uint256 locking) {
+        return _getLocking(user, vestId);
+    }
+
+    function getTotalLocking(address user, uint256[] memory vestIds) external view override returns (uint256 locking) {
+        for (uint256 i = 0; i < vestIds.length; i++) {
+            locking += _getLocking(user, vestIds[i]);
         }
     }
 
@@ -192,14 +227,29 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
 
     function _getClaimable(address user, uint256 vestId) internal view returns (uint256 claimable) {
         VestInfo memory info = userVestInfos[user][vestId];
-        uint256 pastTime = block.timestamp - info.startTime;
-        uint256 wholeTime = info.endTime - info.startTime;
-        if (pastTime >= wholeTime) {
-            claimable = info.vestAmount;
-        } else {
-            claimable = info.vestAmount.mulDiv(pastTime, wholeTime);
+        if (!info.forceWithdrawn) {
+            uint256 pastTime = block.timestamp - info.startTime;
+            uint256 wholeTime = info.endTime - info.startTime;
+            if (pastTime >= wholeTime) {
+                claimable = info.vestAmount;
+            } else {
+                claimable = info.vestAmount.mulDiv(pastTime, wholeTime);
+            }
+            claimable = claimable - info.claimedAmount;
         }
-        claimable = claimable - info.claimedAmount;
+    }
+
+    function _getLocking(address user, uint256 vestId) internal view returns (uint256 locking) {
+        VestInfo memory info = userVestInfos[user][vestId];
+        if (!info.forceWithdrawn) {
+            if (block.timestamp >= info.endTime) {
+                locking = 0;
+            } else {
+                uint256 leftTime = info.endTime - block.timestamp;
+                uint256 wholeTime = info.endTime - info.startTime;
+                locking = info.vestAmount.mulDiv(leftTime, wholeTime);
+            }
+        }
     }
 
     function _getForceWithdrawable(address user, uint256 vestId)
@@ -208,17 +258,13 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         returns (uint256 withdrawable, uint256 penalty)
     {
         VestInfo memory info = userVestInfos[user][vestId];
-        if (info.forceWithdrawn) {
-            return (0, 0);
-        }
-
-        uint256 claimable = _getClaimable(user, vestId);
-        uint256 locking = info.vestAmount - claimable;
+        uint256 locking = _getLocking(user, vestId);
         uint256 left = (locking *
             (forceWithdrawMinRemainRatio +
                 ((10000 - forceWithdrawMinRemainRatio) * (block.timestamp - info.startTime)) /
                 vestTime)) / 10000;
         if (left > locking) left = locking;
+        uint256 claimable = _getClaimable(user, vestId);
         withdrawable = claimable + left;
         penalty = locking - left;
     }
@@ -242,27 +288,20 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         emit Withdraw(msg.sender, to, amount, vestId);
     }
 
-    function _forceWithdraw(address to, uint256 vestId) internal returns (uint256 withdrawAmount) {
+    function _forceWithdraw(address to, uint256 vestId) internal returns (uint256 withdrawAmount, uint256 penalty) {
         require(to != address(0), "can not withdraw to zero address");
         VestInfo storage info = userVestInfos[msg.sender][vestId];
         require(!info.forceWithdrawn, "already force withdrawn");
         info.forceWithdrawn = true;
 
-        uint256 claimable = _getClaimable(msg.sender, vestId);
-        uint256 locking = info.vestAmount - claimable;
-        uint256 left = (locking *
-            (forceWithdrawMinRemainRatio +
-                ((10000 - forceWithdrawMinRemainRatio) * (block.timestamp - info.startTime)) /
-                vestTime)) / 10000;
-        if (left > locking) left = locking;
-        withdrawAmount = claimable + left;
+        (withdrawAmount, penalty) = _getForceWithdrawable(msg.sender, vestId);
+        require(withdrawAmount > 0, "withdrawAmount is zero");
         TransferHelper.safeTransfer(apeXToken, to, withdrawAmount);
+        if (penalty > 0) TransferHelper.safeTransfer(apeXToken, treasury, penalty);
         info.claimedAmount += withdrawAmount;
 
-        if (locking > left) TransferHelper.safeTransfer(apeXToken, treasury, locking - left);
-
-        _burn(address(this), claimable + locking);
-        emit ForceWithdraw(msg.sender, to, withdrawAmount, vestId);
+        _burn(address(this), withdrawAmount + penalty);
+        emit ForceWithdraw(msg.sender, to, withdrawAmount, penalty, vestId);
     }
 
     function _spendAllowance(
@@ -273,7 +312,9 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         uint256 currentAllowance = allowance[from][spender];
         if (currentAllowance != type(uint256).max) {
             require(currentAllowance >= value, "insufficient allowance");
-            allowance[from][spender] = currentAllowance - value;
+            unchecked {
+                _approve(owner, spender, currentAllowance - value);
+            }
         }
     }
 

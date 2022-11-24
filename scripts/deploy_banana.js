@@ -27,8 +27,8 @@ let buybackPool;
 
 const main = async () => {
   [owner] = await ethers.getSigners();
-  // await createOrAttachMockToken();
-  // await createOrAttachBanana();
+  await createOrAttachMockToken();
+  await createOrAttachBanana();
   await createClaimable();
   await createDistributor();
   await createBuybackPool();

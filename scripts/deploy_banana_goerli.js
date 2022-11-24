@@ -4,15 +4,15 @@ const verifyStr = "npx hardhat verify --network";
 
 const apeXAddress = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
 const usdcAddress = "0xd44BB808bfE43095dBb94c83077766382D63952a";
-const bananaAddress = "";
+const bananaAddress = "0x39d3a0F25D94D9c13E552b9E81eF9b03550A9783";
 const keeper = "0x6C7866b45F0A7954A69CE5F37850FB857E9C48b8";
-const twamm = "0xd7F7071a7229Da970c81B022d8Be1BdaE1486351";
-const initPrice = BigNumber.from("290000000000000");
+const twamm = "0xc0767d86dDf8b172f2B57AD6Ddf59B35c3170E81";
+const initPrice = BigNumber.from("400000000000000");
 // const startTime = Math.floor(new Date() / 1000) + 60;
-const startTime = 1668661200;
-const endTime = 1700197200;
-const redeemTime = 1668672000;
-const duration = 1 * 60 * 60;
+const startTime = 1669104000;
+const endTime = 1671696000;
+const redeemTime = 1671710400;
+const duration = 24 * 60 * 60;
 const distributeTime = startTime + duration;
 const initReward = BigNumber.from("480769230769230800000000000");
 const delta = 50;
@@ -29,8 +29,8 @@ const main = async () => {
   [owner] = await ethers.getSigners();
   await createOrAttachMockToken();
   await createOrAttachBanana();
-  await createClaimable();
-  await createDistributor();
+  // await createClaimable();
+  // await createDistributor();
   await createBuybackPool();
 };
 
@@ -109,7 +109,7 @@ async function createDistributor() {
 async function createBuybackPool() {
   if (distributor == null) {
     const BananaDistributor = await ethers.getContractFactory("BananaDistributor");
-    distributor = BananaDistributor.attach("0x0772ab6e3C6ba1d840608A45Ed310910F2E1A46d");
+    distributor = BananaDistributor.attach("0x3645B882fa6EB1cE3335765Faf7C25CB8dD260E6");
   }
 
   const BuybackPool = await ethers.getContractFactory("BuybackPool");
