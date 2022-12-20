@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 pragma solidity ^0.8.0;
 
-interface IStakingPool {
-    event Deposit(address indexed user, uint256 amount, uint256 period, uint256 expireAt);
-    event Withdraw(address indexed user, address indexed to, uint256 amount);
-    event ClaimReward(address indexed user, address indexed to, uint256 claimed);
+interface IStakingPool2 {
+    event Deposited(address indexed user, uint256 amount, uint256 period, uint256 expireAt);
+    event Withdrawn(address indexed user, address indexed to, uint256 amount);
+    event RewardClaimed(address indexed user, address indexed to, uint256 claimed);
+    event SharesTransferred(address indexed from, address indexed to, uint256 amount);
     event RewardsPerSecondUpdated(uint256 oldRewards, uint256 newRewards);
     event EndTimeUpdated(uint256 oldEndTime, uint256 newEndTime);
     event MinPeriodUpdated(uint256 oldMinPeriod, uint256 newMinPeriod);
