@@ -37,6 +37,7 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         treasury = treasury_;
         vestTime = vestTime_;
         forceWithdrawMinRemainRatio = forceWithdrawMinRemainRatio_;
+        isMinter[owner] = true;
     }
 
     function addMinter(address minter) external onlyOwner {
@@ -93,38 +94,28 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         emit Vest(msg.sender, amount, info.endTime, vestId);
     }
 
-    function withdraw(
-        address to,
-        uint256 vestId,
-        uint256 amount
-    ) external override {
+    function withdraw(address to, uint256 vestId, uint256 amount) external override {
         _withdraw(to, vestId, amount);
     }
 
-    function batchWithdraw(
-        address to,
-        uint256[] memory vestIds,
-        uint256[] memory amounts
-    ) external override {
+    function batchWithdraw(address to, uint256[] memory vestIds, uint256[] memory amounts) external override {
         require(vestIds.length == amounts.length, "two arrays' length not the same");
         for (uint256 i = 0; i < vestIds.length; i++) {
             _withdraw(to, vestIds[i], amounts[i]);
         }
     }
 
-    function forceWithdraw(address to, uint256 vestId)
-        external
-        override
-        returns (uint256 withdrawAmount, uint256 penalty)
-    {
+    function forceWithdraw(
+        address to,
+        uint256 vestId
+    ) external override returns (uint256 withdrawAmount, uint256 penalty) {
         return _forceWithdraw(to, vestId);
     }
 
-    function batchForceWithdraw(address to, uint256[] memory vestIds)
-        external
-        override
-        returns (uint256 withdrawAmount, uint256 penalty)
-    {
+    function batchForceWithdraw(
+        address to,
+        uint256[] memory vestIds
+    ) external override returns (uint256 withdrawAmount, uint256 penalty) {
         for (uint256 i = 0; i < vestIds.length; i++) {
             (uint256 withdrawAmount_, uint256 penalty_) = _forceWithdraw(to, vestIds[i]);
             withdrawAmount += withdrawAmount_;
@@ -137,11 +128,7 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) external override returns (bool) {
+    function transferFrom(address from, address to, uint256 value) external override returns (bool) {
         _spendAllowance(from, msg.sender, value);
         _transfer(from, to, value);
         return true;
@@ -182,12 +169,10 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         return _getClaimable(user, vestId);
     }
 
-    function getTotalClaimable(address user, uint256[] memory vestIds)
-        external
-        view
-        override
-        returns (uint256 claimable)
-    {
+    function getTotalClaimable(
+        address user,
+        uint256[] memory vestIds
+    ) external view override returns (uint256 claimable) {
         for (uint256 i = 0; i < vestIds.length; i++) {
             claimable += _getClaimable(user, vestIds[i]);
         }
@@ -203,21 +188,17 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         }
     }
 
-    function getForceWithdrawable(address user, uint256 vestId)
-        external
-        view
-        override
-        returns (uint256 withdrawable, uint256 penalty)
-    {
+    function getForceWithdrawable(
+        address user,
+        uint256 vestId
+    ) external view override returns (uint256 withdrawable, uint256 penalty) {
         return _getForceWithdrawable(user, vestId);
     }
 
-    function getTotalForceWithdrawable(address user, uint256[] memory vestIds)
-        external
-        view
-        override
-        returns (uint256 withdrawable, uint256 penalty)
-    {
+    function getTotalForceWithdrawable(
+        address user,
+        uint256[] memory vestIds
+    ) external view override returns (uint256 withdrawable, uint256 penalty) {
         for (uint256 i = 0; i < vestIds.length; i++) {
             (uint256 withdrawable_, uint256 penalty_) = _getForceWithdrawable(user, vestIds[i]);
             withdrawable += withdrawable_;
@@ -252,11 +233,10 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         }
     }
 
-    function _getForceWithdrawable(address user, uint256 vestId)
-        internal
-        view
-        returns (uint256 withdrawable, uint256 penalty)
-    {
+    function _getForceWithdrawable(
+        address user,
+        uint256 vestId
+    ) internal view returns (uint256 withdrawable, uint256 penalty) {
         VestInfo memory info = userVestInfos[user][vestId];
         uint256 locking = _getLocking(user, vestId);
         uint256 left = (locking *
@@ -269,11 +249,7 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         penalty = locking - left;
     }
 
-    function _withdraw(
-        address to,
-        uint256 vestId,
-        uint256 amount
-    ) internal {
+    function _withdraw(address to, uint256 vestId, uint256 amount) internal {
         require(to != address(0), "can not withdraw to zero address");
         require(amount > 0, "zero amount");
         VestInfo storage info = userVestInfos[msg.sender][vestId];
@@ -292,23 +268,18 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         require(to != address(0), "can not withdraw to zero address");
         VestInfo storage info = userVestInfos[msg.sender][vestId];
         require(!info.forceWithdrawn, "already force withdrawn");
-        info.forceWithdrawn = true;
 
         (withdrawAmount, penalty) = _getForceWithdrawable(msg.sender, vestId);
         require(withdrawAmount > 0, "withdrawAmount is zero");
         TransferHelper.safeTransfer(apeXToken, to, withdrawAmount);
         if (penalty > 0) TransferHelper.safeTransfer(apeXToken, treasury, penalty);
         info.claimedAmount += withdrawAmount;
-
+        info.forceWithdrawn = true;
         _burn(address(this), withdrawAmount + penalty);
         emit ForceWithdraw(msg.sender, to, withdrawAmount, penalty, vestId);
     }
 
-    function _spendAllowance(
-        address from,
-        address spender,
-        uint256 value
-    ) internal virtual {
+    function _spendAllowance(address from, address spender, uint256 value) internal virtual {
         uint256 currentAllowance = allowance[from][spender];
         if (currentAllowance != type(uint256).max) {
             require(currentAllowance >= value, "insufficient allowance");
@@ -331,20 +302,12 @@ contract EsAPEX2 is IEsAPEX2, Ownable {
         emit Transfer(from, address(0), value);
     }
 
-    function _approve(
-        address _owner,
-        address spender,
-        uint256 value
-    ) private {
+    function _approve(address _owner, address spender, uint256 value) private {
         allowance[_owner][spender] = value;
         emit Approval(_owner, spender, value);
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 value
-    ) private {
+    function _transfer(address from, address to, uint256 value) private {
         require(to != address(0), "can not tranfer to zero address");
         uint256 fromBalance = balanceOf[from];
         require(fromBalance >= value, "transfer amount exceeds balance");
