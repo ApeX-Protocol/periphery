@@ -23,6 +23,7 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         uint256 shares;
         uint256 index;
         uint256 rewardAccrued;
+        uint256 fixedStartIndex;
         FixedDeposit[] fixedDeposits;
     }
 
@@ -102,7 +103,8 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         uint256 result = userInfo.currentDeposit;
         FixedDeposit[] memory fixeds = userInfo.fixedDeposits;
         FixedDeposit memory _fixed;
-        for (uint256 i = 0; i < fixeds.length; i++) {
+        uint256 startIndex = userInfo.fixedStartIndex;
+        for (uint256 i = startIndex; i < fixeds.length; i++) {
             _fixed = fixeds[i];
             if (_fixed.amount > 0 && _fixed.expireAt <= currentTime) {
                 result += _fixed.amount;
@@ -194,17 +196,22 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         uint256 currentTime = block.timestamp;
         UserInfo memory userInfo = userInfos[user];
         uint256 currentDeposit = userInfo.currentDeposit;
+        uint256 startIndex = userInfo.fixedStartIndex;
         uint256 sharesToBeBurnt;
         FixedDeposit[] memory fixeds = userInfo.fixedDeposits;
         FixedDeposit memory _fixed;
-        for (uint256 i = 0; i < fixeds.length; i++) {
+        for (uint256 i = startIndex; i < fixeds.length; i++) {
             _fixed = fixeds[i];
             if (_fixed.amount > 0 && _fixed.expireAt <= currentTime) {
                 currentDeposit += _fixed.amount;
                 sharesToBeBurnt += _fixed.shares - _fixed.amount;
                 delete userInfos[user].fixedDeposits[i];
+                if (startIndex == i) {
+                    startIndex += 1;
+                }
             }
         }
+        userInfos[user].fixedStartIndex = startIndex;
         userInfos[user].currentDeposit = currentDeposit;
         _burnShares(user, sharesToBeBurnt);
     }
