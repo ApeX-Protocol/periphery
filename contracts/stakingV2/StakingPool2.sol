@@ -15,31 +15,29 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
     struct FixedDeposit {
         uint256 amount;
         uint256 shares;
-        uint256 expireAt;
-    }
-
-    struct UserInfo {
-        uint256 currentDeposit;
-        uint256 shares;
-        uint256 index;
-        uint256 rewardAccrued;
-        uint256 fixedStartIndex;
-        FixedDeposit[] fixedDeposits;
     }
 
     uint256 public constant ONE_YEAR = 365 * 24 * 3600;
     uint256 public constant INDEX_SCALE = 1e36;
-
-    address public override stakeToken;
-    address public override rewardToken;
+    uint256 public constant EXPIRE_MAPPING_HEAD = uint256(1);
 
     uint256 public override rewardsPerSecond;
     uint256 public override endTime;
     uint256 public override minPeriod;
     uint256 public override totalShares;
 
-    RewardState public poolRewardState;
-    mapping(address => UserInfo) public userInfos;
+    address public override stakeToken;
+    address public override rewardToken;
+
+    RewardState public override poolRewardState;
+
+    mapping(address => uint256) public override getUserShares;
+    mapping(address => uint256) public override getUserIndex;
+    mapping(address => uint256) public override getUserCurrentDeposit;
+    mapping(address => uint256) public override getUserRewardAccrued;
+
+    mapping(address => mapping(uint256 => uint256)) public getUserNextExpireAt;
+    mapping(address => mapping(uint256 => FixedDeposit)) public getUserFixedDeposit;
 
     function initialize(
         address _owner,
@@ -73,10 +71,6 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         minPeriod = newMinPeriod;
     }
 
-    function sharesOf(address user) external view override returns (uint256) {
-        return userInfos[user].shares;
-    }
-
     function rewardClaimable(address user) public view override returns (uint256) {
         uint256 poolIndex;
         uint256 deltaTime = block.timestamp - poolRewardState.timestamp;
@@ -86,34 +80,30 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
             poolIndex = poolRewardState.index + ratio;
         }
 
-        uint256 userIndex = userInfos[user].index;
+        uint256 userIndex = getUserIndex[user];
         if (userIndex == 0 && poolIndex >= INDEX_SCALE) {
             userIndex = INDEX_SCALE;
         }
 
         uint256 deltaIndex = poolIndex - userIndex;
-        uint256 userShares = userInfos[user].shares;
+        uint256 userShares = getUserShares[user];
         uint256 userRewardDelta = deltaIndex * userShares;
-        return userInfos[user].rewardAccrued + userRewardDelta;
+        return getUserRewardAccrued[user] + userRewardDelta;
     }
 
     function withdrawable(address user) public view override returns (uint256) {
+        uint256 _addToCurrent;
         uint256 currentTime = block.timestamp;
-        UserInfo memory userInfo = userInfos[user];
-        uint256 result = userInfo.currentDeposit;
-        FixedDeposit[] memory fixeds = userInfo.fixedDeposits;
-        FixedDeposit memory _fixed;
-        uint256 startIndex = userInfo.fixedStartIndex;
-        for (uint256 i = startIndex; i < fixeds.length; i++) {
-            _fixed = fixeds[i];
-            if (_fixed.amount > 0 && _fixed.expireAt <= currentTime) {
-                result += _fixed.amount;
-            }
+        uint256 next = getUserNextExpireAt[msg.sender][EXPIRE_MAPPING_HEAD];
+        while (next < currentTime && next > 0) {
+            _addToCurrent += getUserFixedDeposit[user][next].amount;
+            next = getUserNextExpireAt[msg.sender][next];
         }
-        return result;
+
+        return getUserCurrentDeposit[user] + _addToCurrent;
     }
 
-    function deposit(uint256 amount, uint256 period) external override {
+    function currentDeposit(uint256 amount) external override {
         require(amount > 0, "zero amount");
 
         _updatePoolRewardIndex();
@@ -121,22 +111,47 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         _updateExpiredFixedsToCurrent(msg.sender);
 
         TransferHelper.safeTransferFrom(stakeToken, msg.sender, address(this), amount);
-        if (period == 0) {
-            _mintShares(msg.sender, amount);
-            userInfos[msg.sender].currentDeposit += amount;
-            emit Deposited(msg.sender, amount, 0, 0);
+        _mintShares(msg.sender, amount);
+        getUserCurrentDeposit[msg.sender] += amount;
+        emit Deposited(msg.sender, amount, amount, 0, 0);
+    }
+
+    function fixedDeposit(uint256 amount, uint256 period, uint256 preExpireAt) external override {
+        require(amount > 0, "zero amount");
+        require(period >= minPeriod, "period less than min period");
+        require(preExpireAt > 0, "zero preExpireAt");
+
+        uint256 expireAt = block.timestamp + period;
+        require(expireAt <= endTime, "expireAt > endTime");
+        require(expireAt > preExpireAt, "expireAt <= preExpireAt");
+
+        _updatePoolRewardIndex();
+        _distributeUserReward(msg.sender);
+        _updateExpiredFixedsToCurrent(msg.sender);
+
+        TransferHelper.safeTransferFrom(stakeToken, msg.sender, address(this), amount);
+        uint256 shares = amount + (amount * 3 * period) / ONE_YEAR;
+        _mintShares(msg.sender, shares);
+
+        getUserFixedDeposit[msg.sender][expireAt] = FixedDeposit(amount, shares);
+        uint256 first = getUserNextExpireAt[msg.sender][EXPIRE_MAPPING_HEAD];
+        if (first == 0) {
+            getUserNextExpireAt[msg.sender][EXPIRE_MAPPING_HEAD] = expireAt;
         } else {
-            require(period >= minPeriod, "less than min period");
-            uint256 expireAt = block.timestamp + period;
-            require(expireAt <= endTime, "expiration time over end time");
-
-            uint256 shares = amount + (amount * 3 * period) / ONE_YEAR;
-            _mintShares(msg.sender, shares);
-
-            FixedDeposit memory fixedDeposit = FixedDeposit(amount, shares, expireAt);
-            userInfos[msg.sender].fixedDeposits.push(fixedDeposit);
-            emit Deposited(msg.sender, amount, period, expireAt);
+            if (preExpireAt == EXPIRE_MAPPING_HEAD) {
+                require(expireAt < first, "expireAt >= first");
+                getUserNextExpireAt[msg.sender][EXPIRE_MAPPING_HEAD] = expireAt;
+                getUserNextExpireAt[msg.sender][expireAt] = first;
+            } else {
+                uint256 next = getUserNextExpireAt[msg.sender][preExpireAt];
+                require(getUserFixedDeposit[msg.sender][preExpireAt].amount > 0, "invalid preExpireAt");
+                require(expireAt < getUserNextExpireAt[msg.sender][preExpireAt], "expireAt >= nextExpireAt");
+                getUserNextExpireAt[msg.sender][preExpireAt] = expireAt;
+                getUserNextExpireAt[msg.sender][expireAt] = next;
+            }
         }
+
+        emit Deposited(msg.sender, amount, shares, period, expireAt);
     }
 
     function withdraw(address to, uint256 amount) external override {
@@ -144,9 +159,10 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         _distributeUserReward(msg.sender);
         _updateExpiredFixedsToCurrent(msg.sender);
 
-        require(amount <= userInfos[msg.sender].currentDeposit, "over withdrawable");
+        require(amount <= getUserCurrentDeposit[msg.sender], "over withdrawable");
         _burnShares(msg.sender, amount);
-        userInfos[msg.sender].currentDeposit -= amount;
+        getUserCurrentDeposit[msg.sender] -= amount;
+
         TransferHelper.safeTransfer(stakeToken, to, amount);
         emit Withdrawn(msg.sender, to, amount);
     }
@@ -156,8 +172,9 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         _distributeUserReward(msg.sender);
         _updateExpiredFixedsToCurrent(msg.sender);
 
-        claimed = userInfos[msg.sender].rewardAccrued;
-        userInfos[msg.sender].rewardAccrued = 0;
+        claimed = getUserRewardAccrued[msg.sender];
+        getUserRewardAccrued[msg.sender] = 0;
+
         TransferHelper.safeTransfer(rewardToken, to, claimed);
         emit RewardClaimed(msg.sender, to, claimed);
     }
@@ -176,56 +193,56 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
 
     function _distributeUserReward(address user) internal {
         uint256 poolIndex = poolRewardState.index;
-        uint256 userIndex = userInfos[user].index;
+        uint256 userIndex = getUserIndex[user];
         // Update user's index to the current pool index
-        userInfos[user].index = poolIndex;
+        getUserIndex[user] = poolIndex;
 
         if (userIndex == 0 && poolIndex >= INDEX_SCALE) {
             userIndex = INDEX_SCALE;
         }
 
         uint256 deltaIndex = poolIndex - userIndex;
-        uint256 userShares = userInfos[user].shares;
+        uint256 userShares = getUserShares[user];
         uint256 userRewardDelta = deltaIndex * userShares;
-        userInfos[user].rewardAccrued += userRewardDelta;
+        getUserRewardAccrued[user] += userRewardDelta;
 
         emit DistributedUserReward(user, userRewardDelta, poolIndex);
     }
 
     function _updateExpiredFixedsToCurrent(address user) internal {
-        uint256 currentTime = block.timestamp;
-        UserInfo memory userInfo = userInfos[user];
-        uint256 currentDeposit = userInfo.currentDeposit;
-        uint256 startIndex = userInfo.fixedStartIndex;
-        uint256 sharesToBeBurnt;
-        FixedDeposit[] memory fixeds = userInfo.fixedDeposits;
         FixedDeposit memory _fixed;
-        for (uint256 i = startIndex; i < fixeds.length; i++) {
-            _fixed = fixeds[i];
-            if (_fixed.amount > 0 && _fixed.expireAt <= currentTime) {
-                currentDeposit += _fixed.amount;
-                sharesToBeBurnt += _fixed.shares - _fixed.amount;
-                delete userInfos[user].fixedDeposits[i];
-                if (startIndex == i) {
-                    startIndex += 1;
-                }
-            }
+        uint256 _addToCurrent;
+        uint256 _sharesToBurn;
+        uint256 currentTime = block.timestamp;
+        uint256 next = getUserNextExpireAt[user][EXPIRE_MAPPING_HEAD];
+        uint256 _temp;
+        while (next < currentTime && next > 0) {
+            _fixed = getUserFixedDeposit[user][next];
+            _addToCurrent += _fixed.amount;
+            _sharesToBurn += _fixed.shares - _fixed.amount;
+            delete getUserFixedDeposit[user][next];
+
+            _temp = next;
+            next = getUserNextExpireAt[user][next];
+            delete getUserNextExpireAt[user][_temp];
         }
-        userInfos[user].fixedStartIndex = startIndex;
-        userInfos[user].currentDeposit = currentDeposit;
-        _burnShares(user, sharesToBeBurnt);
+
+        if (getUserNextExpireAt[user][EXPIRE_MAPPING_HEAD] != next)
+            getUserNextExpireAt[user][EXPIRE_MAPPING_HEAD] = next;
+        if (_addToCurrent > 0) getUserCurrentDeposit[user] += _addToCurrent;
+        if (_sharesToBurn > 0) _burnShares(user, _sharesToBurn);
     }
 
     function _mintShares(address user, uint256 shares) internal {
         totalShares += shares;
-        userInfos[user].shares += shares;
+        getUserShares[user] += shares;
         emit SharesTransferred(address(0), user, shares);
     }
 
     function _burnShares(address user, uint256 shares) internal {
-        require(userInfos[user].shares >= shares, "not enough shares to be burnt");
+        require(getUserShares[user] >= shares, "not enough shares to be burnt");
         totalShares -= shares;
-        userInfos[user].shares -= shares;
+        getUserShares[user] -= shares;
         emit SharesTransferred(user, address(0), shares);
     }
 }

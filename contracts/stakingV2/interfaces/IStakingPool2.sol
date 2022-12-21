@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IStakingPool2 {
-    event Deposited(address indexed user, uint256 amount, uint256 period, uint256 expireAt);
+    event Deposited(address indexed user, uint256 amount, uint256 shares, uint256 period, uint256 expireAt);
     event Withdrawn(address indexed user, address indexed to, uint256 amount);
     event RewardClaimed(address indexed user, address indexed to, uint256 claimed);
     event SharesTransferred(address indexed from, address indexed to, uint256 amount);
@@ -23,13 +23,23 @@ interface IStakingPool2 {
 
     function totalShares() external view returns (uint256);
 
-    function sharesOf(address user) external view returns (uint256);
+    function poolRewardState() external view returns (uint256 index, uint256 timestamp);
+
+    function getUserIndex(address user) external view returns (uint256);
+
+    function getUserShares(address user) external view returns (uint256);
+
+    function getUserCurrentDeposit(address user) external view returns (uint256);
+
+    function getUserRewardAccrued(address user) external view returns (uint256);
 
     function rewardClaimable(address user) external view returns (uint256);
 
     function withdrawable(address user) external view returns (uint256);
 
-    function deposit(uint256 amount, uint256 period) external;
+    function currentDeposit(uint256 amount) external;
+
+    function fixedDeposit(uint256 amount, uint256 period, uint256 preExpireAt) external;
 
     function withdraw(address to, uint256 amount) external;
 
