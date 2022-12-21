@@ -87,7 +87,7 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
 
         uint256 deltaIndex = poolIndex - userIndex;
         uint256 userShares = getUserShares[user];
-        uint256 userRewardDelta = deltaIndex * userShares;
+        uint256 userRewardDelta = (deltaIndex * userShares) / INDEX_SCALE;
         return getUserRewardAccrued[user] + userRewardDelta;
     }
 
@@ -203,7 +203,7 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
 
         uint256 deltaIndex = poolIndex - userIndex;
         uint256 userShares = getUserShares[user];
-        uint256 userRewardDelta = deltaIndex * userShares;
+        uint256 userRewardDelta = (deltaIndex * userShares) / INDEX_SCALE;
         getUserRewardAccrued[user] += userRewardDelta;
 
         emit DistributedUserReward(user, userRewardDelta, poolIndex);
