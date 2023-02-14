@@ -122,8 +122,8 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         require(preExpireAt > 0, "zero preExpireAt");
 
         uint256 expireAt = block.timestamp + period;
-        require(expireAt <= endTime, "expireAt > endTime");
-        require(expireAt > preExpireAt, "expireAt <= preExpireAt");
+        require(expireAt <= endTime, "expireAt over endTime");
+        require(expireAt > preExpireAt, "expireAt not after preExpireAt");
 
         _updatePoolRewardIndex();
         _distributeUserReward(msg.sender);
@@ -139,15 +139,15 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
             getUserNextExpireAt[msg.sender][EXPIRE_MAPPING_HEAD] = expireAt;
         } else {
             if (preExpireAt == EXPIRE_MAPPING_HEAD) {
-                require(expireAt < first, "expireAt >= first");
+                require(expireAt < first, "expireAt not before first");
                 getUserNextExpireAt[msg.sender][EXPIRE_MAPPING_HEAD] = expireAt;
                 getUserNextExpireAt[msg.sender][expireAt] = first;
             } else {
-                uint256 next = getUserNextExpireAt[msg.sender][preExpireAt];
                 require(getUserFixedDeposit[msg.sender][preExpireAt].amount > 0, "invalid preExpireAt");
-                require(expireAt < getUserNextExpireAt[msg.sender][preExpireAt], "expireAt >= nextExpireAt");
+                uint256 next = getUserNextExpireAt[msg.sender][preExpireAt];
+                if (next > 0) require(expireAt < next, "expireAt not before next");
                 getUserNextExpireAt[msg.sender][preExpireAt] = expireAt;
-                getUserNextExpireAt[msg.sender][expireAt] = next;
+                if (next > 0) getUserNextExpireAt[msg.sender][expireAt] = next;
             }
         }
 
@@ -159,6 +159,7 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         _distributeUserReward(msg.sender);
         _updateExpiredFixedsToCurrent(msg.sender);
 
+        require(amount > 0, "zero amount");
         require(amount <= getUserCurrentDeposit[msg.sender], "over withdrawable");
         _burnShares(msg.sender, amount);
         getUserCurrentDeposit[msg.sender] -= amount;
@@ -173,6 +174,7 @@ contract StakingPool2 is IStakingPool2, Ownable, Initializable {
         _updateExpiredFixedsToCurrent(msg.sender);
 
         claimed = getUserRewardAccrued[msg.sender];
+        require(claimed > 0, "claimable amount is zero");
         getUserRewardAccrued[msg.sender] = 0;
 
         TransferHelper.safeTransfer(rewardToken, to, claimed);

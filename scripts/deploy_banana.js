@@ -2,17 +2,17 @@ const { ethers } = require("hardhat");
 const { BigNumber } = require("@ethersproject/bignumber");
 const verifyStr = "npx hardhat verify --network";
 
-const apeXAddress = "0x52A8845DF664D76C69d2EEa607CD793565aF42B8";
-const usdcAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-const bananaAddress = "0x2A1DCA74419c2D304A3D359F428eE1A4e9324A90";
-const keeper = "0xD2B6D51Af2BF55864738FA1DB575D1c7b442B097";
-const twamm = "0xcd43AbA971bEF65555D877657F83093dDFB885b8";
+const apeXAddress = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
+const usdcAddress = "0xd44BB808bfE43095dBb94c83077766382D63952a";
+const bananaAddress = "0x55630FF201036a75710B142A83fF473ed54E6f12";
+const keeper = "0x6C7866b45F0A7954A69CE5F37850FB857E9C48b8";
+const twamm = "0xc0767d86dDf8b172f2B57AD6Ddf59B35c3170E81";
 const initPrice = BigNumber.from("400000000000000");
 // const startTime = Math.floor(new Date() / 1000) + 60;
-const startTime = 1669017600;
-const endTime = 1700468100;
-const redeemTime = 1700726400;
-const duration = 7 * 24 * 60 * 60;
+const startTime = 1672808400;
+const endTime = 1672826400;
+const redeemTime = 1672830000;
+const duration = 1 * 60 * 60;
 const distributeTime = startTime + duration;
 const initReward = BigNumber.from("480769230769230800000000000");
 const delta = 50;
@@ -72,16 +72,16 @@ async function createOrAttachBanana() {
 
 async function createClaimable() {
   const BananaClaimable = await ethers.getContractFactory("BananaClaimable");
-  claimable = await BananaClaimable.deploy(bananaAddress);
+  claimable = await BananaClaimable.deploy(banana.address);
   console.log("BananaClaimable:", claimable.address);
-  console.log(verifyStr, process.env.HARDHAT_NETWORK, claimable.address, bananaAddress);
+  console.log(verifyStr, process.env.HARDHAT_NETWORK, claimable.address, banana.address);
   await claimable.setSigner(keeper, true);
 }
 
 async function createDistributor() {
   const BananaDistributor = await ethers.getContractFactory("BananaDistributor");
   distributor = await BananaDistributor.deploy(
-    bananaAddress,
+    banana.address,
     keeper,
     claimable.address,
     duration,
@@ -95,7 +95,7 @@ async function createDistributor() {
     verifyStr,
     process.env.HARDHAT_NETWORK,
     distributor.address,
-    bananaAddress,
+    banana.address,
     keeper,
     claimable.address,
     duration,
@@ -114,8 +114,8 @@ async function createBuybackPool() {
 
   const BuybackPool = await ethers.getContractFactory("BuybackPool");
   buybackPool = await BuybackPool.deploy(
-    bananaAddress,
-    usdcAddress,
+    banana.address,
+    usdc.address,
     twamm,
     distributor.address,
     keeper,
@@ -130,8 +130,8 @@ async function createBuybackPool() {
     verifyStr,
     process.env.HARDHAT_NETWORK,
     buybackPool.address,
-    bananaAddress,
-    usdcAddress,
+    banana.address,
+    usdc.address,
     twamm,
     distributor.address,
     keeper,

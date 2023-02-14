@@ -3,7 +3,7 @@ const { BigNumber } = require("@ethersproject/bignumber");
 const verifyStr = "npx hardhat verify --network";
 
 let esApeX = "0x44Af87B33620c775A8363194C24ffc3067F8497C";
-let merkleRoot = "0x598782f333ada809da3709ff4c6770e85d906e5e9b8a50c414faf82fdd3fb22c";
+let merkleRoot = "0xd12e1f6c1a20ac9447c9bf499d7c770d258d3c4731fa224601813e0dbede1cdf";
 let merkleDistributor;
 
 const main = async () => {

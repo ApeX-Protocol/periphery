@@ -14,7 +14,7 @@ async function main() {
   console.log("Account balance:", (await account.getBalance()).toString());
 
   //banana
-  const token0Addr = "0x39d3a0F25D94D9c13E552b9E81eF9b03550A9783";
+  const token0Addr = "0x55630FF201036a75710B142A83fF473ed54E6f12";
   let banaPrice = 0.0004;
   let usdcAmount = 250000;
   const initialToken0Supply = BigNumber.from("625000000000000000000000000");

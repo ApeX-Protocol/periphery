@@ -4,15 +4,15 @@ const verifyStr = "npx hardhat verify --network";
 
 const apeXAddress = "0xEBb0882632e06cbe8070296F7e4E638639f89068";
 const usdcAddress = "0xd44BB808bfE43095dBb94c83077766382D63952a";
-const bananaAddress = "0x39d3a0F25D94D9c13E552b9E81eF9b03550A9783";
+const bananaAddress = "0x55630FF201036a75710B142A83fF473ed54E6f12";
 const keeper = "0x6C7866b45F0A7954A69CE5F37850FB857E9C48b8";
 const twamm = "0xc0767d86dDf8b172f2B57AD6Ddf59B35c3170E81";
 const initPrice = BigNumber.from("400000000000000");
 // const startTime = Math.floor(new Date() / 1000) + 60;
-const startTime = 1669104000;
-const endTime = 1671696000;
-const redeemTime = 1671710400;
-const duration = 24 * 60 * 60;
+const startTime = 1675242000;
+const endTime = 1706778000;
+const redeemTime = 1675587600;
+const duration = 1 * 60 * 60;
 const distributeTime = startTime + duration;
 const initReward = BigNumber.from("480769230769230800000000000");
 const delta = 50;
@@ -29,8 +29,8 @@ const main = async () => {
   [owner] = await ethers.getSigners();
   await createOrAttachMockToken();
   await createOrAttachBanana();
-  // await createClaimable();
-  // await createDistributor();
+  await createClaimable();
+  await createDistributor();
   await createBuybackPool();
 };
 

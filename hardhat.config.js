@@ -20,6 +20,9 @@ module.exports = {
           },
         },
       },
+      {
+        version: "0.8.4",
+      },
     ],
   },
   mocha: {
@@ -63,14 +66,27 @@ module.exports = {
     },
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: process.env.ARBISCAN_API_KEY,
     // apiKey: {
     //   mainnet: process.env.ETHERSCAN_API_KEY,
-    //   rinkeby: process.env.ETHERSCAN_API_KEY,
+    //   goerli: process.env.ETHERSCAN_API_KEY,
     //   // arbitrum
     //   arbitrumOne: process.env.ARBISCAN_API_KEY,
     //   arbitrumTestnet: process.env.ARBISCAN_API_KEY,
     // },
+    // apiKey: {
+    //   arbitrumTestnet: "SE65X5YKMQCGTNI1IVGDN94RK3YXUWR49D",
+    // },
+    // customChains: [
+    //   {
+    //     network: "arbitrumTestnet",
+    //     chainId: 421613,
+    //     urls: {
+    //       apiURL: "https://goerli-rollup.arbitrum.io/rpc",
+    //       browserURL: "https://goerli.arbiscan.io",
+    //     },
+    //   },
+    // ],
   },
   watcher: {
     compilation: {
