@@ -25,20 +25,13 @@ let genesisNftName = "ApeX Genesis NFT";
 let genesisNftSymbol = "APEX-GNS";
 let genesisNftBaseURI = "";
 
-let eachNFT = BigNumber.from("20000000000000000");
-let maxCount = 56;
-let nftRebate;
-
 const main = async () => {
   const accounts = await hre.ethers.getSigners();
   signer = accounts[0].address;
   // await createApeXToken();
   // await createVipNft();
   // await createNftSquid();
-  // await createNFTRebate();
   // await createGenesisNFT();
-  // await createMulticall2();
-  await createRewardForWSOT();
 };
 
 async function createApeXToken() {
@@ -109,13 +102,6 @@ async function createNftSquid() {
   );
 }
 
-async function createNFTRebate() {
-  const NFTRebate = await ethers.getContractFactory("NFTRebate");
-  nftRebate = await NFTRebate.deploy(eachNFT, maxCount);
-  console.log("NFTRebate:", nftRebate.address);
-  console.log(verifyStr, process.env.HARDHAT_NETWORK, nftRebate.address, eachNFT.toString(), maxCount);
-}
-
 async function createGenesisNFT() {
   const GenesisNFT = await ethers.getContractFactory("GenesisNFT");
   let genesisNFT = await GenesisNFT.deploy(genesisNftName, genesisNftSymbol, genesisNftBaseURI);
@@ -129,18 +115,6 @@ async function createMulticall2() {
   let multicall2 = await Multicall2.deploy();
   console.log("Multicall2:", multicall2.address);
   console.log(verifyStr, process.env.HARDHAT_NETWORK, multicall2.address);
-}
-
-async function createRewardForWSOT() {
-  if (squidNft == null) {
-    const nftAddress = "0x7Af3460d552f832fD7E2DE973c628ACeA59B0712";
-    const NftSquid = await ethers.getContractFactory("NftSquid");
-    squidNft = NftSquid.attach(nftAddress);
-  }
-  const RewardForWSOT = await ethers.getContractFactory("RewardForWSOT");
-  const rewardForWSOT = await RewardForWSOT.deploy(squidNft.address);
-  console.log("RewardForWSOT:", rewardForWSOT.address);
-  console.log(verifyStr, process.env.HARDHAT_NETWORK, rewardForWSOT.address, squidNft.address);
 }
 
 main()

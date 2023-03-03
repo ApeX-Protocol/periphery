@@ -33,11 +33,9 @@ contract StakingQuery {
 
         depositIds = new uint256[](count);
         amounts = new uint256[](count);
-        uint256 tempId;
         for (uint256 j = 0; j < count; j++) {
-            tempId = ids[j];
-            depositIds[j] = tempId;
-            amounts[j] = lpPool.getDeposit(user, tempId).amount;
+            depositIds[j] = ids[j];
+            amounts[j] = lpPool.getDeposit(user, ids[j]).amount;
         }
     }
 
@@ -61,11 +59,9 @@ contract StakingQuery {
 
         depositIds = new uint256[](count);
         amounts = new uint256[](count);
-        uint256 tempId;
         for (uint256 j = 0; j < count; j++) {
-            tempId = ids[j];
-            depositIds[j] = tempId;
-            amounts[j] = apeXPool.getDeposit(user, tempId).amount;
+            depositIds[j] = ids[j];
+            amounts[j] = apeXPool.getDeposit(user, ids[j]).amount;
         }
     }
 
@@ -89,11 +85,9 @@ contract StakingQuery {
 
         depositIds = new uint256[](count);
         amounts = new uint256[](count);
-        uint256 tempId;
         for (uint256 j = 0; j < count; j++) {
-            tempId = depositIds[j];
-            depositIds[j] = tempId;
-            amounts[j] = apeXPool.getEsDeposit(user, tempId).amount;
+            depositIds[j] = ids[j];
+            amounts[j] = apeXPool.getEsDeposit(user, ids[j]).amount;
         }
     }
 
@@ -114,11 +108,9 @@ contract StakingQuery {
 
         yieldIds = new uint256[](count);
         amounts = new uint256[](count);
-        uint256 tempId;
         for (uint256 j = 0; j < count; j++) {
-            tempId = yieldIds[j];
-            yieldIds[j] = tempId;
-            amounts[j] = apeXPool.getYield(user, tempId).amount;
+            yieldIds[j] = ids[j];
+            amounts[j] = apeXPool.getYield(user, ids[j]).amount;
         }
     }
 
