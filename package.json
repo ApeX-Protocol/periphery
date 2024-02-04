@@ -44,7 +44,11 @@
     "deploy_referral_test": "hardhat run scripts/deploy_referral.js --network arbitrumTestnet",
     "deploy_nft_rebate_test": "hardhat run scripts/deploy_nft_rebate.js --network arbitrumTestnet",
     "deploy_merkle_test": "hardhat run scripts/deploy_merkle.js --network goerli",
-    "deploy_banana_test": "hardhat run scripts/deploy_banana.js --network goerli"
+    "deploy_banana_test": "hardhat run scripts/deploy_banana.js --network goerli",
+    "deploy_banana2": "hardhat run scripts/deploy_banana2.js --network ",
+    "deploy_banana2_test": "hardhat run scripts/deploy_banana2_sepolia.js --network sepolia",
+    "deploy_esapex2": "hardhat run scripts/deploy_esapex2.js --network ",
+    "verify_esapex2": "hardhat run scripts/verify.js --network "
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.3",

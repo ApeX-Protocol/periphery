@@ -40,61 +40,48 @@ module.exports = {
       url: process.env.MAINNET_RPC,
       accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
     },
-    rinkeby: {
-      url: process.env.RINKEBY_RPC,
-      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
+    sepolia: {
+       url: process.env.SEPOLIA_RPC,
+       accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
+     },
+     mantleTestnet: {
+         chainId: 5001,
+         url: process.env.MANTLE_TESTNET_RPC_URL,
+         accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
+       },
+       mantle: {
+         chainId: 5000,
+         url: process.env.MANTLE_MAINNET_RPC_URL,
+         accounts: process.env.MAINNET_PRIVKEY !== undefined ? [process.env.MAINNET_PRIVKEY] : [],
+       }
+     },
+     etherscan: {
+       apiKey: process.env.ETHERSCAN_API_KEY,
+       customChains: [{
+           network: "mantle",
+           chainId: Number(process.env.MANTLE_MAINNET_CHAIN_ID),
+           urls: {
+             apiURL: `${process.env.MANTLE_MAINNET_EXPLORER}api`,
+             browserURL: process.env.MANTLE_MAINNET_EXPLORER,
+           },
+         },
+         {
+           network: "mantleTestnet",
+           chainId: Number(process.env.MANTLE_TESTNET_CHAIN_ID),
+           urls: {
+             apiURL: `${process.env.MANTLE_TESTNET_EXPLORER}api`,
+             browserURL: process.env.MANTLE_TESTNET_EXPLORER,
+           },
+         },
+       ],
+     },
+    watcher: {
+      compilation: {
+        tasks: ["compile"],
+      },
+      test: {
+        tasks: ["test"],
+        files: ["./test/*"],
+      },
     },
-    goerli: {
-      url: process.env.GOERLI_RPC,
-      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
-    },
-    arbitrumOne: {
-      url: process.env.ARBITRUM_ONE_RPC,
-      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
-    },
-    arbitrumTestnet: {
-      url: process.env.ARBITRUM_TESTNET_RPC,
-      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
-    },
-    bscMainnet: {
-      url: process.env.BSC_MAINNET_PRC,
-      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
-    },
-    bscTestnet: {
-      url: process.env.BSC_TESTNET_PRC,
-      accounts: process.env.DEVNET_PRIVKEY !== undefined ? [process.env.DEVNET_PRIVKEY] : [],
-    },
-  },
-  etherscan: {
-    apiKey: process.env.ARBISCAN_API_KEY,
-    // apiKey: {
-    //   mainnet: process.env.ETHERSCAN_API_KEY,
-    //   goerli: process.env.ETHERSCAN_API_KEY,
-    //   // arbitrum
-    //   arbitrumOne: process.env.ARBISCAN_API_KEY,
-    //   arbitrumTestnet: process.env.ARBISCAN_API_KEY,
-    // },
-    // apiKey: {
-    //   arbitrumTestnet: "SE65X5YKMQCGTNI1IVGDN94RK3YXUWR49D",
-    // },
-    // customChains: [
-    //   {
-    //     network: "arbitrumTestnet",
-    //     chainId: 421613,
-    //     urls: {
-    //       apiURL: "https://goerli-rollup.arbitrum.io/rpc",
-    //       browserURL: "https://goerli.arbiscan.io",
-    //     },
-    //   },
-    // ],
-  },
-  watcher: {
-    compilation: {
-      tasks: ["compile"],
-    },
-    test: {
-      tasks: ["test"],
-      files: ["./test/*"],
-    },
-  },
 };
