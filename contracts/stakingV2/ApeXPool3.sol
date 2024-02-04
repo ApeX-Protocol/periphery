@@ -10,6 +10,7 @@ contract ApeXPool3 is IApeXPool3, Ownable {
     address public immutable override esApeX;
 
     struct stakingInfo{
+        address lockToken;
         address owner;
         uint256 accountId;
         uint256 amount;
@@ -41,6 +42,7 @@ contract ApeXPool3 is IApeXPool3, Ownable {
 
         globalStakeId++;
         stakingAPEX[globalStakeId] = stakingInfo({
+            lockToken: apeX,
             owner: msg.sender,
             accountId: accountId,
             amount: amount,
@@ -57,6 +59,7 @@ contract ApeXPool3 is IApeXPool3, Ownable {
        
         globalStakeId++;
         stakingEsAPEX[globalStakeId] = stakingInfo({
+            lockToken: esApeX,
             owner: msg.sender,
             accountId: accountId,
             amount: amount,
@@ -68,18 +71,42 @@ contract ApeXPool3 is IApeXPool3, Ownable {
     }
 
     function unstakeAPEX(uint256 stakeId) external override {
+       _unstakeAPEX(stakeId);
+    }
+
+    function _unstakeAPEX(uint256 stakeId) private {
         stakingInfo memory info = stakingAPEX[stakeId];
+        require(info.owner == msg.sender, "not allowed");
         require(info.lockStart+info.lockPeriod <= block.timestamp,"in lock period");
+        require(info.lockToken == apeX, "apeX token mismatch");
 
         TransferHelper.safeTransfer(apeX, info.owner, info.amount);
         emit Unstaked(stakeId);
     }
 
-    function unstakeEsAPEX(uint256 stakeId) external override {
+    function batchUnstakeAPEX(uint256[] calldata stakeIds) external  {
+        for (uint i = 0; i < stakeIds.length; i++) {
+            _unstakeAPEX(stakeIds[i]);
+        }
+    }
+
+    function _unstakeEsAPEX(uint256 stakeId) private{
         stakingInfo memory info = stakingEsAPEX[stakeId];
+        require(info.owner == msg.sender, "not allowed");
         require(info.lockStart+info.lockPeriod <= block.timestamp,"in lock period");
+        require(info.lockToken == esApeX, "esApeX token mismatch");
 
         TransferHelper.safeTransfer(esApeX, info.owner, info.amount);
         emit Unstaked(stakeId);
+    }
+
+    function unstakeEsAPEX(uint256 stakeId) external override {
+        _unstakeEsAPEX(stakeId);
+    }
+
+    function batchUnstakeEsAPEX(uint256[] calldata stakeIds) external  {
+        for (uint i = 0; i < stakeIds.length; i++) {
+            _unstakeEsAPEX(stakeIds[i]);
+        }
     }
 }
