@@ -16,6 +16,7 @@ contract ApeXPool3 is IApeXPool3, Ownable {
         uint256 amount;
         uint256 lockPeriod;
         uint256 lockStart;
+        bool unlocked;
     }
 
     mapping(uint256 => stakingInfo) public stakingAPEX;
@@ -47,7 +48,8 @@ contract ApeXPool3 is IApeXPool3, Ownable {
             accountId: accountId,
             amount: amount,
             lockPeriod: lockPeriod,
-            lockStart: block.timestamp
+            lockStart: block.timestamp,
+            unlocked: false
         });
 
         emit Staked(apeX, msg.sender, globalStakeId, accountId, amount,lockPeriod);
@@ -64,7 +66,8 @@ contract ApeXPool3 is IApeXPool3, Ownable {
             accountId: accountId,
             amount: amount,
             lockPeriod: lockPeriod,
-            lockStart: block.timestamp
+            lockStart: block.timestamp,
+            unlocked: false
         });
 
         emit Staked(esApeX, msg.sender, globalStakeId, accountId, amount,lockPeriod);
@@ -79,8 +82,10 @@ contract ApeXPool3 is IApeXPool3, Ownable {
         require(info.owner == msg.sender, "not allowed");
         require(info.lockStart+info.lockPeriod <= block.timestamp,"in lock period");
         require(info.lockToken == apeX, "apeX token mismatch");
+        require(!info.unlocked,"already unlocked");
 
         TransferHelper.safeTransfer(apeX, info.owner, info.amount);
+        info.unlocked = true;
         emit Unstaked(stakeId);
     }
 
@@ -95,8 +100,10 @@ contract ApeXPool3 is IApeXPool3, Ownable {
         require(info.owner == msg.sender, "not allowed");
         require(info.lockStart+info.lockPeriod <= block.timestamp,"in lock period");
         require(info.lockToken == esApeX, "esApeX token mismatch");
+        require(!info.unlocked,"already unlocked");
 
         TransferHelper.safeTransfer(esApeX, info.owner, info.amount);
+        info.unlocked = true;
         emit Unstaked(stakeId);
     }
 
