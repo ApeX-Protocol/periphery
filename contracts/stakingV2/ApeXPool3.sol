@@ -6,8 +6,8 @@ import "../utils/Ownable.sol";
 import "../libraries/TransferHelper.sol";
 
 contract ApeXPool3 is IApeXPool3, Ownable {
-    address public immutable override apeX;
-    address public immutable override esApeX;
+    address public override apeX;
+    address public override esApeX;
 
     struct stakingInfo{
         address lockToken;
@@ -37,8 +37,21 @@ contract ApeXPool3 is IApeXPool3, Ownable {
         emit PausedStateChanged(newState);
     }
 
+    function setApex(address _newApex) external override onlyOwner {
+        require(_newApex != address(0));
+        apeX = _newApex;
+        emit ApexChanged(_newApex);
+    }
+
+    function setEsApex(address _newEsApex) external override onlyOwner {
+        require(_newEsApex != address(0));
+        esApeX = _newEsApex;
+        emit EsApexChanged(_newEsApex);
+    }
+
     function stakeAPEX(uint256 accountId, uint256 amount,uint256 lockPeriod) external override {
         require(!paused, "paused");
+        require(apeX != address(0));
         TransferHelper.safeTransferFrom(apeX, msg.sender, address(this), amount);
 
         globalStakeId++;
@@ -57,6 +70,7 @@ contract ApeXPool3 is IApeXPool3, Ownable {
 
     function stakeEsAPEX(uint256 accountId, uint256 amount,uint256 lockPeriod) external override {
         require(!paused, "paused");
+        require(esApeX != address(0));
         TransferHelper.safeTransferFrom(esApeX, msg.sender, address(this), amount);
        
         globalStakeId++;
