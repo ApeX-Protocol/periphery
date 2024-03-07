@@ -85,7 +85,7 @@ contract ApeXPool3 is IApeXPool3, Ownable {
         require(!info.unlocked,"already unlocked");
 
         TransferHelper.safeTransfer(apeX, info.owner, info.amount);
-        info.unlocked = true;
+        stakingAPEX[stakeId].unlocked = true;
         emit Unstaked(stakeId);
     }
 
@@ -103,7 +103,7 @@ contract ApeXPool3 is IApeXPool3, Ownable {
         require(!info.unlocked,"already unlocked");
 
         TransferHelper.safeTransfer(esApeX, info.owner, info.amount);
-        info.unlocked = true;
+        stakingEsAPEX[stakeId].unlocked = true;
         emit Unstaked(stakeId);
     }
 
